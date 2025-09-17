@@ -1,0 +1,135 @@
+/* Backdrop with blur */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+}
+
+/* Dialog sheet */
+.modal-sheet {
+  width: min(680px, 92vw);
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  overflow: hidden;
+  animation: popIn 160ms ease-out;
+}
+
+/* Header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  border-bottom: 1px solid #e6e8ee;
+}
+.modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+}
+.icon-btn {
+  border: 0;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: #475569;
+}
+
+/* Body */
+.modal-body {
+  padding: 18px 20px;
+  background: #f8fafc;
+}
+
+/* Footer */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  background: #f8fafc;
+  border-top: 1px solid #e6e8ee;
+}
+
+/* Buttons */
+.btn {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.btn.ghost {
+  background: #fff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+/* Increase specificity so nothing overrides it */
+.modal-footer .btn.primary {
+  background: #16a34a !important;   /* green-600 */
+  color: #fff !important;
+  border-color: #15803d !important;
+}
+
+/* Keep it green on hover, active, focus, disabled */
+.modal-footer .btn.primary:hover,
+.modal-footer .btn.primary:active,
+.modal-footer .btn.primary:focus,
+.modal-footer .btn.primary:disabled {
+  background: #16a34a !important;
+  color: #fff !important;
+  border-color: #15803d !important;
+  filter: none !important;
+}
+
+/* Optional: focus ring while staying green */
+.modal-footer .btn.primary:focus-visible {
+  outline: 3px solid rgba(163, 24, 22, 0.35) !important;
+  outline-offset: 2px;
+}
+
+
+/* Form layout similar to Figma card */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 16px;
+}
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.form-row.full {
+  grid-column: 1 / -1;
+}
+label {
+  font-size: 13px;
+  color: #334155;
+}
+input, select, textarea {
+  background: #eaf2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  padding: 10px 12px;
+  outline: none;
+  font-size: 14px;
+}
+textarea { resize: vertical; }
+
+/* Entrance animation */
+@keyframes popIn {
+  from { transform: translateY(8px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .form-grid { grid-template-columns: 1fr; }
+}
