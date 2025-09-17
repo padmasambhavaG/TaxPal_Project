@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom"; 
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // 👈 import icons
-import "../../App.css";
 import "./resetpassword.css";
 
 function ResetPassword() {
