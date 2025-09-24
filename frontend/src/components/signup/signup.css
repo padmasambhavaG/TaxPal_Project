@@ -28,6 +28,14 @@ body {
   text-align: center;
 }
 
+.logo {
+  font-size: 32px;
+  font-weight: bold;
+  margin: 0 auto 20px;
+  color: rgb(0, 0, 0);
+  text-align: center;
+}
+
 .illustration img {
    max-width: 100%;
   height: auto;      /* 🔥 scale properly */

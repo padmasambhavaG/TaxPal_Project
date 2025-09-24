@@ -25,27 +25,27 @@ export default function Sidebar({ activeTab = "dashboard" }) {
 
         <nav className="side-nav">
           <button className={`nav-btn ${activeTab === "dashboard" ? "active" : ""}`} onClick={() => navigate("/dashboard")}>
-            <span className="nav-icon"><FiHome size={18} /></span>
+            <span className="nav-icon"><FiHome /></span>
             Dashboard
           </button>
 
           <button className={`nav-btn ${activeTab === "transactions" ? "active" : ""}`} onClick={() => navigate("/transactions")}>
-            <span className="nav-icon"><FiCreditCard size={18} /></span>
+            <span className="nav-icon"><FiCreditCard /></span>
             Transactions
           </button>
 
           <button className={`nav-btn ${activeTab === "budgets" ? "active" : ""}`} onClick={() => navigate("/budgets")}>
-            <span className="nav-icon"><FiPocket size={18} /></span>
+            <span className="nav-icon"><FiPocket /></span>
             Budgets
           </button>
 
           <button className={`nav-btn ${activeTab === "tax" ? "active" : ""}`} onClick={() => navigate("/tax")}>
-            <span className="nav-icon"><FiPercent size={18} /></span>
+            <span className="nav-icon"><FiPercent /></span>
             Tax Estimator
           </button>
 
           <button className={`nav-btn ${activeTab === "reports" ? "active" : ""}`} onClick={() => navigate("/reports")}>
-            <span className="nav-icon"><FiBarChart2 size={18} /></span>
+            <span className="nav-icon"><FiBarChart2 /></span>
             Reports
           </button>
         </nav>
@@ -61,12 +61,12 @@ export default function Sidebar({ activeTab = "dashboard" }) {
 
           <div className="profile-actions">
             <button className="link-btn" onClick={() => navigate("/settings")}>
-              <span className="nav-icon"><FiSettings size={16} /></span>
+              <span className="nav-icon"><FiSettings /></span>
               Settings
             </button>
 
             <button className="link-btn" onClick={openConfirm}>
-              <span className="nav-icon"><FiLogOut size={16} /></span>
+              <span className="nav-icon"><FiLogOut /></span>
               Logout
             </button>
           </div>

@@ -1,7 +1,10 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import "../../App.css";
 import "./signin.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { login } from "../../services/api";
+import { useToast } from "../toast/ToastProvider";
 
 function Signin() {
   const [formData, setFormData] = useState({
@@ -11,6 +14,10 @@ function Signin() {
 
   // 👁️ state only for login password
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -20,16 +27,30 @@ function Signin() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login attempted with:", formData);
-    alert("Login submitted!");
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      const response = await login(formData);
+      localStorage.setItem("taxpal_token", response.token);
+      localStorage.setItem("taxpal_user", JSON.stringify(response.user));
+      showToast({ message: response.message || "Login successful!" });
+      navigate("/dashboard");
+    } catch (err) {
+      const message = err.message || "Unable to login. Please try again.";
+      setError(message);
+      showToast({ message, type: "error" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="container">
       <div className="illustration">
-        <h1>TaxPal</h1>
+        <h1 className="logo">TaxPal</h1>
         <img src="/illustration.png" alt="Illustration" />
       </div>
 
@@ -69,7 +90,11 @@ function Signin() {
             </Link>
           </div>
 
-          <button type="submit">Login</button>
+          {error && <p className="error-message">{error}</p>}
+
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Logging in..." : "Login"}
+          </button>
         </form>
 
         <p className="signup-text">
