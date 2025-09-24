@@ -35,8 +35,9 @@ body {
 .logo {
   font-size: 32px;
   font-weight: bold;
-  margin-bottom: 20px;
+  margin: 0 auto 20px;
   color: rgb(0, 0, 0);
+  text-align: center;
 }
 
 .illustration img {
@@ -86,7 +87,7 @@ form select {
   width: 100%;
   padding: 12px;
   margin: 8px 0;
-  border: 1px solid #ccc;
+  border: 1px solid #ffffff;
   border-radius: 6px;
   font-size: 14px;
   box-sizing: border-box;
@@ -106,7 +107,7 @@ form select.error {
 }
 
 form input::placeholder {
-  color: #999;
+  color: #ffffff;
 }
 
 .error-message {
@@ -121,7 +122,7 @@ form input::placeholder {
 form button {
   width: 100%;
   padding: 12px;
-  background: #2d00ff;
+  background: #ffffff;
   color: white;
   border: none;
   border-radius: 6px;
