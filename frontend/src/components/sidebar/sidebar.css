@@ -41,7 +41,7 @@
   border: none;
   background: none;
   border-radius: 8px;
-  color: #64748b;
+  color: #000102;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -50,8 +50,8 @@
 }
 
 .nav-btn:hover {
-  background: #f1f5f9;
-  color: #1e293b;
+  background: #3b82f6;
+  color: #ced4dc;
 }
 
 .nav-btn.active {
@@ -76,20 +76,10 @@
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
+  padding-right: 15px;
+  padding-left: 15px;
 }
 
-.avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #3b82f6;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 14px;
-}
 
 .profile-info .name {
   font-weight: 600;
@@ -106,7 +96,9 @@
 .profile-actions {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  padding-left: 15px;
+  padding-right: 15px;
 }
 
 .link-btn {
@@ -128,6 +120,25 @@
   background: #f1f5f9;
   color: #1e293b;
 }
+/* make sure previous .avatar styles don’t conflict */
+.avatar-img{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  object-fit:cover;
+  border:1px solid #1e293b;
+  background:#0b1323;
+  display:block;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
 
 /* Sidebar responsive */
 @media (max-width: 768px) {

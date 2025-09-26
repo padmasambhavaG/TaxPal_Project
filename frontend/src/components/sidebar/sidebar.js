@@ -1,7 +1,7 @@
 // src/components/sidebar/sidebar.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ConfirmLogout from "../logout/confirmlogout";
+import ConfirmLogout from "../logout/confirmLogout";
 import "./sidebar.css";
 import { FiHome, FiCreditCard, FiPocket, FiPercent, FiBarChart2, FiSettings, FiLogOut } from "react-icons/fi";
 
@@ -50,14 +50,19 @@ export default function Sidebar({ activeTab = "dashboard" }) {
           </button>
         </nav>
 
-        <div className="profile-section">
-          <div className="profile-info">
-            <div className="avatar">AM</div>
-            <div>
-              <p className="name">Alex Morgan</p>
-              <p className="email">alex.morgan@email.com</p>
-            </div>
-          </div>
+        <div className="profile-info">
+  <img
+    src="/profile.png"          // or {avatar} if imported
+    alt="User avatar"
+    className="avatar-img"
+    width={36}
+    height={36}
+  />
+  <div>
+    <p className="name">Alex Morgan</p>
+    <p className="email">alex.morgan@email.com</p>
+  </div>
+</div>
 
           <div className="profile-actions">
             <button className="link-btn" onClick={() => navigate("/settings")}>
@@ -70,10 +75,8 @@ export default function Sidebar({ activeTab = "dashboard" }) {
               Logout
             </button>
           </div>
-        </div>
-      </aside>
-
-      <ConfirmLogout open={showConfirm} onCancel={cancel} onConfirm={confirm} />
+        </aside>
+     <ConfirmLogout open={showConfirm} onCancel={cancel} onConfirm={confirm} />
     </>
   );
 }
