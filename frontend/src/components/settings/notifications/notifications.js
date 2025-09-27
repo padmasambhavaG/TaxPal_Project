@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "../settings.css";
+import "./notifications.css";
 
 export default function Notifications() {
   const [prefs, setPrefs] = useState({
@@ -19,7 +20,7 @@ export default function Notifications() {
 
       <ul className="list">
         <li className="list-row">
-          <span>Transactions</span>
+          <span className="sub-notif">Transactions</span>
           <input
             type="checkbox"
             checked={prefs.transactions}
@@ -28,22 +29,13 @@ export default function Notifications() {
         </li>
 
         <li className="list-row">
-          <span>Reminders</span>
+          <span className="sub-notif">Payment Reminders</span>
           <input
             type="checkbox"
             checked={prefs.remainder}
             onChange={() => toggle("remainder")}
           />
-        </li>
-
-        <li className="list-row">
-          <span>Profile changes</span>
-          <input
-            type="checkbox"
-            checked={prefs.profile}
-            onChange={() => toggle("profile")}
-          />
-        </li>
+        </li>        
       </ul>
     </div>
   );

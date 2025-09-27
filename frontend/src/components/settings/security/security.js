@@ -2,14 +2,21 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ConfirmLogout from "../../logout/confirmLogout";
 import "../settings.css";
+import DeleteAccount from "../deleteAccount/deleteAccount";
 
 export default function Security() {
   const navigate = useNavigate();
+
+  // Logout modal state
   const [showConfirm, setShowConfirm] = useState(false);
 
+  // Delete account modal state
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  // Logout modal handlers
   const openConfirm = () => setShowConfirm(true);
   const cancel = () => setShowConfirm(false);
-
   const confirm = () => {
     // Perform logout logic here
     localStorage.removeItem("token");
@@ -21,7 +28,41 @@ export default function Security() {
     navigate("/signin");
   };
 
+  // Navigation
   const goChangePassword = () => navigate("/reset-password");
+
+  // Delete account modal handlers
+  const openConfirmDelete = () => setShowConfirmDelete(true);
+  const cancelDelete = () => {
+    if (!deleting) setShowConfirmDelete(false);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      setDeleting(true);
+
+      // TODO: Replace with real API call
+      // const token = localStorage.getItem("token");
+      // const res = await fetch("/api/account", {
+      //   method: "DELETE",
+      //   headers: { Authorization: `Bearer ${token}` },
+      // });
+      // if (!res.ok) throw new Error("Delete failed");
+
+      // Simulate latency
+      await new Promise((r) => setTimeout(r, 600));
+
+      // On success: clear auth and redirect to signup
+      localStorage.removeItem("token");
+      setShowConfirmDelete(false);
+      navigate("/signup");
+    } catch (err) {
+      console.error(err);
+      alert("Unable to delete account. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <>
@@ -51,14 +92,37 @@ export default function Security() {
               </button>
             </div>
           </div>
+
+          <div className="card">
+            <h4>Delete Account</h4>
+            <p>Delete your account.</p>
+            <div className="toolbar">
+              <button
+                className="btn danger"
+                type="button"
+                onClick={openConfirmDelete}
+                disabled={deleting}
+                aria-disabled={deleting}
+              >
+                {deleting ? "Deleting..." : "Delete permanently"}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* ConfirmLogout modal */}
-      <ConfirmLogout 
-        open={showConfirm} 
-        onCancel={cancel} 
-        onConfirm={confirm} 
+      <ConfirmLogout
+        open={showConfirm}
+        onCancel={cancel}
+        onConfirm={confirm}
+      />
+
+      {/* DeleteAccount modal */}
+      <DeleteAccount
+        open={showConfirmDelete}
+        onCancel={cancelDelete}
+        onConfirm={confirmDelete}
       />
     </>
   );
