@@ -62,10 +62,12 @@ export default function CategoryModal({ open, initialType = "expense", onClose, 
 
         <label className="set-field">
           <span className="set-label">Color</span>
-          <div className="color-row">
-            <input type="color" value={color} onChange={(e)=>setColor(e.target.value)} />
-            <span className="color-preview" style={{ backgroundColor: color }} />
-          </div>
+          <input
+            type="color"
+            className="color-square"
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+          />
         </label>
       </div>
 

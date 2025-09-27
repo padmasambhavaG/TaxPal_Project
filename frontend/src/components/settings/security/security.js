@@ -75,7 +75,7 @@ export default function Security() {
         <div className="security-grid">
           <div className="card">
             <h4>Active sessions</h4>
-            <p>Sign out from this device.</p>
+            <p>Sign out from this device and browser.</p>
             <div className="toolbar">
               <button className="btn danger" type="button" onClick={openConfirm}>
                 Sign out all
@@ -95,7 +95,7 @@ export default function Security() {
 
           <div className="card">
             <h4>Delete Account</h4>
-            <p>Delete your account.</p>
+            <p>Delete your account permanently.</p>
             <div className="toolbar">
               <button
                 className="btn danger"

@@ -45,9 +45,9 @@
   font-size: 14px;
 }
 .nav-item.active {
-  color: white;
+  color: white ;
   background: black; 
 }
 .nav-item.hover {
-  color: white;  
+  color: white ; 
 }
