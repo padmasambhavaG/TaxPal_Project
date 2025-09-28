@@ -150,3 +150,9 @@
     padding: 12px;
   }
 }
+.bar {
+  border: none;
+  border-top: 0.5px solid #e2e8f0;
+  margin:0;
+  padding:0;
+}

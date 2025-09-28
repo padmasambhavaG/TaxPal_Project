@@ -12,6 +12,7 @@ import Profile from "./components/settings/profile/profile";
 import Categories from "./components/settings/categories/categories";
 import Notifications from "./components/settings/notifications/notifications";
 import Security from "./components/settings/security/security";
+import Budgets from "./components/budgets/budgets";
 
 function App() {
   return (
@@ -26,7 +27,7 @@ function App() {
         {/* Everything that should show the sidebar lives under Layout */}
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<Dashboard />} />
-
+          <Route path="/budgets" element={<Budgets />} />
           {/* Settings also under Layout so Sidebar stays visible */}
           <Route path="/settings" element={<SettingsLayout />}>
             <Route index element={<Navigate to="profile" replace />} />

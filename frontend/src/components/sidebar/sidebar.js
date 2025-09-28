@@ -22,6 +22,7 @@ export default function Sidebar({ activeTab = "dashboard" }) {
     <>
       <aside className="dash-sidebar">
         <div className="brand">TaxPal</div>
+        <hr className="bar" />
 
         <nav className="side-nav">
           <button className={`nav-btn ${activeTab === "dashboard" ? "active" : ""}`} onClick={() => navigate("/dashboard")}>
