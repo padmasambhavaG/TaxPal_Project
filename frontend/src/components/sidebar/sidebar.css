@@ -60,8 +60,17 @@
 }
 
 .nav-icon {
-  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
   opacity: 0.8;
+}
+
+.nav-icon svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* Profile Section */
@@ -114,6 +123,16 @@
   border-radius: 6px;
   transition: all 0.2s ease;
   padding: 0%;
+}
+
+.link-btn .nav-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.link-btn .nav-icon svg {
+  width: 14px;
+  height: 14px;
 }
 
 .link-btn:hover {

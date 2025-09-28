@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import './signup.css';
+import { signup as signupRequest } from '../../services/api';
+import { useToast } from '../toast/ToastProvider';
 
 const SignUp = () => {
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     username: '',
     password: '',
     confirmPassword: '',
@@ -12,13 +14,19 @@ const SignUp = () => {
     email: '',
     country: '',
     incomeBracket: ''
-  });
+  };
+
+  const [formData, setFormData] = useState(initialFormData);
 
   const [errors, setErrors] = useState({});
 
   // 👁️ separate toggles for each password field
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serverError, setServerError] = useState('');
+  const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const countries = [
     'United States', 'Canada', 'United Kingdom', 'Australia',
@@ -118,16 +126,32 @@ const SignUp = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const newErrors = validateForm();
 
-    if (Object.keys(newErrors).length === 0) {
-      console.log('Form submitted:', formData);
-      alert('Account created successfully!');
-    } else {
+    if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      showToast({ message: 'Please fix the highlighted errors.', type: 'warning' });
+      return;
+    }
+
+    setErrors({});
+    setServerError('');
+    setIsSubmitting(true);
+
+    try {
+      const response = await signupRequest(formData);
+      showToast({ message: response.message || 'Account created successfully!' });
+      setFormData(initialFormData);
+      navigate('/signin');
+    } catch (err) {
+      const message = err.message || 'Unable to create account. Please try again.';
+      setServerError(message);
+      showToast({ message, type: 'error' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -231,7 +255,11 @@ const SignUp = () => {
             ))}
           </select>
 
-          <button type="submit">Create Account</button>
+          {serverError && <span className="error-message">{serverError}</span>}
+
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Creating account...' : 'Create Account'}
+          </button>
         </form>
 
         <p className="signin-text">

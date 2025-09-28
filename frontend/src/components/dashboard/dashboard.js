@@ -5,6 +5,7 @@ import "./dashboard.css";
 // import modals from separate folders (all .js files)
 import IncomeModal from "../income/incomemodal";
 import ExpenseModal from "../expence/expencemodal";
+import Sidebar from "../sidebar/sidebar";
 
 export default function Dashboard() {
   // modal visibility state
@@ -18,105 +19,109 @@ export default function Dashboard() {
   };
 
   return (
-    <>
-      <header className="dash-header">
-        <div className="header-content">
-          <h1>Financial Dashboard</h1>
-          <p className="welcome-text">
-            Welcome back, Alex Morgan! Here's your financial summary.
-          </p>
-        </div>
-        <div className="header-actions">
-          <button className="btn-record income" onClick={() => setShowIncome(true)}>
-            <span className="btn-icon">➕</span>
-            Record Income
-          </button>
-          <button className="btn-record expense" onClick={() => setShowExpense(true)}>
-            <span className="btn-icon">➖</span>
-            Record Expense
-          </button>
-        </div>
-      </header>
+    <div className="dashboard-layout">
+      <Sidebar activeTab="dashboard" />
 
-      {/* KPIs */}
-      <section className="kpi-section">
-        <div className="kpi-card">
-          <div className="kpi-content">
-            <div className="kpi-label">Monthly Income</div>
-            <div className="kpi-value">₹0.00</div>
-            <div className="kpi-trend positive">↗ last month</div>
+      <main className="dashboard-main">
+        <header className="dash-header">
+          <div className="header-content">
+            <h1>Financial Dashboard</h1>
+            <p className="welcome-text">
+              Welcome back, Alex Morgan! Here's your financial summary.
+            </p>
           </div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-content">
-            <div className="kpi-label">Monthly Expenses</div>
-            <div className="kpi-value">₹0.00</div>
-            <div className="kpi-trend neutral">No expenses yet</div>
+          <div className="header-actions">
+            <button className="btn-record income" onClick={() => setShowIncome(true)}>
+              <span className="btn-icon">➕</span>
+              Record Income
+            </button>
+            <button className="btn-record expense" onClick={() => setShowExpense(true)}>
+              <span className="btn-icon">➖</span>
+              Record Expense
+            </button>
           </div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-content">
-            <div className="kpi-label">Net Income</div>
-            <div className="kpi-value">₹0.00</div>
-            <div className="kpi-trend positive">↗ Perfect month!</div>
-          </div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-content">
-            <div className="kpi-label">Savings Rate</div>
-            <div className="kpi-value">100.0%</div>
-            <div className="kpi-trend positive">↗ Above target</div>
-          </div>
-        </div>
-      </section>
+        </header>
 
-      {/* Charts */}
-      <section className="charts-section">
-        <div className="chart-card large">
-          <div className="chart-header">
-            <h3>Income vs Expenses Overview</h3>
-            <div className="chart-filters">
-              <button className="filter-btn">Year</button>
-              <button className="filter-btn">Quater</button>
-              <button className="filter-btn">Month</button>
+        {/* KPIs */}
+        <section className="kpi-section">
+          <div className="kpi-card">
+            <div className="kpi-content">
+              <div className="kpi-label">Monthly Income</div>
+              <div className="kpi-value">₹0.00</div>
+              <div className="kpi-trend positive">↗ last month</div>
             </div>
           </div>
-          <div className="chart-placeholder">
-            <div className="placeholder-content">
-              <span className="placeholder-icon"></span>
-              <p>Chart visualization</p>
+          <div className="kpi-card">
+            <div className="kpi-content">
+              <div className="kpi-label">Monthly Expenses</div>
+              <div className="kpi-value">₹0.00</div>
+              <div className="kpi-trend neutral">No expenses yet</div>
             </div>
           </div>
-        </div>
+          <div className="kpi-card">
+            <div className="kpi-content">
+              <div className="kpi-label">Net Income</div>
+              <div className="kpi-value">₹0.00</div>
+              <div className="kpi-trend positive">↗ Perfect month!</div>
+            </div>
+          </div>
+          <div className="kpi-card">
+            <div className="kpi-content">
+              <div className="kpi-label">Savings Rate</div>
+              <div className="kpi-value">100.0%</div>
+              <div className="kpi-trend positive">↗ Above target</div>
+            </div>
+          </div>
+        </section>
 
-        <div className="chart-card">
-          <div className="chart-header">
-            <h3>Expense Categories</h3>
-          </div>
-          <div className="chart-placeholder">
-            <div className="placeholder-content">
-              <span className="placeholder-icon"></span>
-              <p>Pie chart</p>
+        {/* Charts */}
+        <section className="charts-section">
+          <div className="chart-card large">
+            <div className="chart-header">
+              <h3>Income vs Expenses Overview</h3>
+              <div className="chart-filters">
+                <button className="filter-btn">Year</button>
+                <button className="filter-btn">Quarter</button>
+                <button className="filter-btn">Month</button>
+              </div>
+            </div>
+            <div className="chart-placeholder">
+              <div className="placeholder-content">
+                <span className="placeholder-icon"></span>
+                <p>Chart visualization</p>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Transactions */}
-      <section className="transactions-section">
-        <div className="section-card">
-          <div className="section-header">
-            <h3>Recent Transactions</h3>
-            <button className="view-all-btn">View All →</button>
-          </div>
-          <div className="transactions-placeholder">
-            <div className="placeholder-content">
-              <span className="placeholder-icon"></span>
-              <p>Recent transactions table will appear here</p>
+          <div className="chart-card">
+            <div className="chart-header">
+              <h3>Expense Categories</h3>
+            </div>
+            <div className="chart-placeholder">
+              <div className="placeholder-content">
+                <span className="placeholder-icon"></span>
+                <p>Pie chart</p>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* Transactions */}
+        <section className="transactions-section">
+          <div className="section-card">
+            <div className="section-header">
+              <h3>Recent Transactions</h3>
+              <button className="view-all-btn">View All →</button>
+            </div>
+            <div className="transactions-placeholder">
+              <div className="placeholder-content">
+                <span className="placeholder-icon"></span>
+                <p>Recent transactions table will appear here</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
 
       {/* Modals */}
       <IncomeModal
@@ -129,6 +134,6 @@ export default function Dashboard() {
         onClose={() => setShowExpense(false)}
         onSubmit={handleRecord}
       />
-    </>
+    </div>
   );
 }
