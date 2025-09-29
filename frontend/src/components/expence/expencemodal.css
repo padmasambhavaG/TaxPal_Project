@@ -16,8 +16,8 @@
   background: #ffffff;
   border-radius: 14px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.25);
-  overflow: hidden;
   animation: popIn 160ms ease-out;
+  overflow: visible;
 }
 
 /* Header */
@@ -45,6 +45,7 @@
 .modal-body {
   padding: 18px 20px;
   background: #f8fafc;
+  overflow: visible;
 }
 
 /* Footer */
@@ -75,6 +76,7 @@
   background: #16a34a !important;   /* green-600 */
   color: #fff !important;
   border-color: #15803d !important;
+  overflow: visible;
 }
 
 /* Keep it green on hover, active, focus, disabled */
@@ -133,3 +135,31 @@ textarea { resize: vertical; }
 @media (max-width: 640px) {
   .form-grid { grid-template-columns: 1fr; }
 }
+.modal-sheet { z-index: 1001; }
+.form-grid { overflow: visible; }
+/* Ensure fields size correctly */
+.form-row select {
+  min-height: 40px;         /* taller control */
+  line-height: 1.2;
+}
+
+/* Prevent clipping inside modal body */
+.modal-body,
+.modal-sheet {
+  overflow: visible;         /* allow dropdown to escape */
+}
+
+/* Create a higher stacking context for the dropdown */
+.form-row,
+select {
+  position: relative;
+  z-index: 2;                /* above neighbors */
+}
+
+/* Safari/WebKit dropdown fix inside transformed parents */
+@supports (-webkit-overflow-scrolling: touch) {
+  .modal-backdrop { transform: translateZ(0); }
+}
+
+/* If any parent sets overflow:hidden, override here */
+.form-grid { overflow: visible; }

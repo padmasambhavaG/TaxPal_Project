@@ -1,5 +1,6 @@
-// src/components/expence/expencemodal.js
+
 import React, { useState, useEffect } from "react";
+import { txStore } from "../transactions/txStore";
 import "./expencemodal.css";
 
 // helpers
@@ -18,7 +19,7 @@ export default function ExpenseModal({ open, onClose, onSubmit }) {
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     return () => (document.body.style.overflow = "");
-  }, [open]); // [attached_file:1][attached_file:2]
+  }, [open]);
 
   // set default date on open; reset on close
   useEffect(() => {
@@ -28,9 +29,9 @@ export default function ExpenseModal({ open, onClose, onSubmit }) {
       setForm({ description: "", amount: "", category: "", date: "", notes: "" });
       setErrors({ amount: "", description: "", category: "", date: "" });
     }
-  }, [open]); // [attached_file:1][attached_file:2]
+  }, [open]);
 
-  if (!open) return null; // [attached_file:1][attached_file:2]
+  if (!open) return null;
 
   const handle = (e) => {
     const { name, value } = e.target;
@@ -65,7 +66,7 @@ export default function ExpenseModal({ open, onClose, onSubmit }) {
     }
 
     setForm((f) => ({ ...f, [name]: value }));
-  }; // [attached_file:1][attached_file:2]
+  };
 
   const validate = () => {
     const er = {};
@@ -78,13 +79,15 @@ export default function ExpenseModal({ open, onClose, onSubmit }) {
     else if (form.date > isoToday()) er.date = "Future date not allowed";
     setErrors((prev) => ({ ...prev, ...er }));
     return Object.keys(er).length === 0;
-  }; // [attached_file:1][attached_file:2]
+  };
 
   const save = () => {
     if (!validate()) return;
-    onSubmit && onSubmit({ ...form, type: "expense", amount: Number(form.amount) });
+    const payload = { ...form, type: "expense", amount: Number(form.amount) };
+    onSubmit && onSubmit(payload);
+    txStore.add(payload); // ADD: push into shared store so Transactions updates
     onClose();
-  }; // [attached_file:1][attached_file:2]
+  };
 
   return (
     <div className="expense-modal modal-backdrop" role="dialog" aria-modal="true" aria-label="Record New Expense">
