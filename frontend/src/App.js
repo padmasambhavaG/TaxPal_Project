@@ -22,7 +22,7 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 
 import TaxEstimator from "./components/taxEstimator/taxEstimator";
 import TaxCalendar from "./components/taxCalender/taxCalender";
-
+import Reports from "./components/report/reports";
 
 function App() {
   return (
@@ -48,6 +48,7 @@ function App() {
             <Route path="/budgets" element={<Budgets />} />
             <Route path="/tax-estimator" element={<TaxEstimator />} />
             <Route path="/tax-calendar" element={<TaxCalendar />} />
+            <Route path="/reports" element={<Reports />} />
 
             {/* Settings nested inside Layout */}
             <Route path="/settings" element={<SettingsLayout />}>
