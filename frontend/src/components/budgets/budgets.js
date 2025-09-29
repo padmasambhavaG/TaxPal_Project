@@ -23,7 +23,6 @@ function formatMonthLabel(iso) {
 }
 
 function parseLabelToISO(label) {
-  // Accepts "May 2025" -> "2025-05" for pre-seeded rows
   const parts = String(label).split(" ");
   if (parts.length === 2) {
     const date = new Date(`${parts[0]} 1, ${parts[1]}`);
@@ -34,13 +33,37 @@ function parseLabelToISO(label) {
   return currentMonthISO();
 }
 
+// Helper: compute status from spent and budget
+function computeStatus(spent, budget) {
+  if (budget <= 0) return spent > 0 ? "Bad" : "Good";
+  const ratio = spent / budget;
+  if (ratio < 0.8) return "Good";
+  if (ratio <= 1) return "Warning";
+  return "Bad";
+}
+
+// Helper: choose overall chip by worst severity
+function aggregateStatus(rows) {
+  let hasBad = false;
+  let hasWarn = false;
+  for (const r of rows) {
+    const s = computeStatus(r.spent, r.budget);
+    if (s === "Bad") hasBad = true;
+    else if (s === "Warning") hasWarn = true;
+  }
+  if (hasBad) return "Bad";
+  if (hasWarn) return "Warning";
+  return "Good";
+}
+
 const seedRows = [
-  { id: "1", category: "Office Supplies", budget: 5000, spent: 1200, month: "May 2025", status: "Good", note: "" },
-  { id: "2", category: "Marketing", budget: 12000, spent: 11500, month: "May 2025", status: "Warning", note: "" },
+  { id: "1", category: "Office Supplies", budget: 5000, spent: 1200, month: "May 2025", note: "" },
+  { id: "2", category: "Marketing", budget: 12000, spent: 11500, month: "May 2025", note: "" },
 ];
 
 export default function Budgets() {
   const [rows, setRows] = useState(seedRows);
+
   const [form, setForm] = useState({
     category: "",
     amount: "",
@@ -48,21 +71,28 @@ export default function Budgets() {
     note: "",
   });
 
-  // track which row is being edited and its draft values
   const [editId, setEditId] = useState(null);
   const [editDraft, setEditDraft] = useState({
     category: "",
     amount: "",
     month: currentMonthISO(),
     note: "",
-    status: "Good",
   });
 
-  const remaining = useMemo(() => {
-    return rows.map((r) => ({ ...r, remaining: Math.max(0, r.budget - r.spent) }));
+  // Derive remaining and computed status for display
+  const derived = useMemo(() => {
+    return rows.map((r) => {
+      const remaining = Math.max(0, r.budget - r.spent);
+      const status = computeStatus(r.spent, r.budget);
+      return { ...r, remaining, status };
+    });
   }, [rows]);
 
-  const onChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const topStatus = useMemo(() => aggregateStatus(rows), [rows]);
+
+  const onChange = (e) =>
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+
   const onEditChange = (e) =>
     setEditDraft((d) => ({ ...d, [e.target.name]: e.target.value }));
 
@@ -84,7 +114,6 @@ export default function Budgets() {
         budget: amt,
         spent: 0,
         month: formatMonthLabel(form.month),
-        status: "Good",
         note: form.note.trim(),
       },
     ]);
@@ -98,7 +127,6 @@ export default function Budgets() {
       amount: String(row.budget),
       month: parseLabelToISO(row.month),
       note: row.note ?? "",
-      status: row.status ?? "Good",
     });
   };
 
@@ -119,7 +147,6 @@ export default function Budgets() {
               category: editDraft.category.trim(),
               budget: amt,
               month: formatMonthLabel(editDraft.month),
-              status: editDraft.status,
               note: editDraft.note?.trim() ?? "",
             }
           : row
@@ -135,12 +162,14 @@ export default function Budgets() {
       <div className="panel">
         <div className="set-head">
           <div>
-            <h2 className="set-title">Create New Budget</h2>
+            <h2 className="set-titles">Create New Budget</h2>
             <p className="set-sub">Define a monthly amount per category.</p>
           </div>
           <div className="budget-health">
             <span className="muted">Budget Health</span>
-            <span className="chip good">Good</span>
+            <span className={`chip ${topStatus === "Good" ? "good" : topStatus === "Warning" ? "warn" : "bad"}`}>
+              {topStatus}
+            </span>
           </div>
         </div>
         <hr />
@@ -196,8 +225,7 @@ export default function Budgets() {
           <div className="toolbar right span-2">
             <button type="button" className="btn ghost sm" onClick={onCancel}>Cancel</button>
             <button type="submit" className="btn primary sm">Create Budget</button>
-        </div>
-
+          </div>
         </form>
       </div>
 
@@ -219,7 +247,7 @@ export default function Budgets() {
               </tr>
             </thead>
             <tbody>
-              {remaining.map((r) => {
+              {derived.map((r) => {
                 const isEditing = editId === r.id;
                 if (!isEditing) {
                   return (
@@ -229,7 +257,7 @@ export default function Budgets() {
                       <td>₹ {r.spent.toLocaleString()}</td>
                       <td>₹ {r.remaining.toLocaleString()}</td>
                       <td>
-                        <span className={`chip ${r.status === "Good" ? "good" : "warn"}`}>
+                        <span className={`chip ${r.status === "Good" ? "good" : r.status === "Warning" ? "warn" : "bad"}`}>
                           {r.status}
                         </span>
                       </td>
@@ -242,7 +270,7 @@ export default function Budgets() {
                   );
                 }
 
-                // Edit row
+                // Edit row (status removed; it's computed)
                 return (
                   <tr key={r.id} className="edit-row">
                     <td>
@@ -267,17 +295,13 @@ export default function Budgets() {
                       />
                     </td>
                     <td>₹ {r.spent.toLocaleString()}</td>
-                    <td>₹ {Math.max(0, Number(editDraft.amount || 0) - r.spent).toLocaleString()}</td>
                     <td>
-                      <select
-                        name="status"
-                        value={editDraft.status}
-                        onChange={onEditChange}
-                      >
-                        <option value="Good">Good</option>
-                        <option value="Warning">Warning</option>
-                        <option value="Bad">Bad</option>
-                      </select>
+                      ₹ {Math.max(0, Number(editDraft.amount || 0) - r.spent).toLocaleString()}
+                    </td>
+                    <td>
+                      <span className={`chip ${computeStatus(r.spent, Number(editDraft.amount || 0)) === "Good" ? "good" : computeStatus(r.spent, Number(editDraft.amount || 0)) === "Warning" ? "warn" : "bad"}`}>
+                        {computeStatus(r.spent, Number(editDraft.amount || 0))}
+                      </span>
                     </td>
                     <td className="actions-col">
                       <div className="inline-edit-actions">
@@ -288,7 +312,7 @@ export default function Budgets() {
                   </tr>
                 );
               })}
-              {remaining.length === 0 && (
+              {derived.length === 0 && (
                 <tr>
                   <td colSpan={6} className="empty">No budgets yet.</td>
                 </tr>
