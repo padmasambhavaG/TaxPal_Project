@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
-import "./confirmLogout.css";
+
 
 export default function ConfirmLogout({ open, onCancel, onConfirm }) {
   useEffect(() => {
@@ -14,16 +14,16 @@ export default function ConfirmLogout({ open, onCancel, onConfirm }) {
     <div className="confirm-backdrop" role="dialog" aria-modal="true">
       <div className="confirm-sheet">
         <div className="confirm-header">
-          <h3>Confirm Logout</h3>
+          <h3>Delete Account</h3>
           <button className="icon-btn" type="button" onClick={onCancel}>✕</button>
         </div>
         <div className="confirm-body">
           <img
-            src="/illustration.png"
+            src="/warnings.png"
             alt="Logout illustration"
             className="confirm-illustration"
           />
-          <p>Are you sure you want to logout?</p>
+          <p>Are you sure you want to delete this <b>account permanently</b>?. Once this action is performed it cannot be undone.</p>
         </div>
         <div className="confirm-footer">
           <button className="btn ghost" type="button" onClick={onCancel}>Cancel</button>
