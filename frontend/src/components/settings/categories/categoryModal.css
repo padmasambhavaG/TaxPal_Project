@@ -137,3 +137,12 @@
 .btn.primary:hover {
   filter: brightness(1.05);
 }
+.btn11 {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #888889;
+    background: #888889;
+    color: rgb(255, 255, 255);
+    cursor: pointer;
+    transition: background .15s ease;
+}

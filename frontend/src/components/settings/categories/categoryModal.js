@@ -72,7 +72,7 @@ export default function CategoryModal({ open, initialType = "expense", onClose, 
       </div>
 
       <div className="modal-foot">
-        <button className="btn" onClick={onCancel} type="button">Cancel</button>
+        <button className="btn11" onClick={onCancel} type="button">Cancel</button>
         <button className="btn primary" onClick={handleSave} type="button" disabled={!valid}>Add</button>
       </div>
     </dialog>
