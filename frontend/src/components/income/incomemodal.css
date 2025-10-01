@@ -1,3 +1,4 @@
+
 /* Backdrop with blur */
 .modal-backdrop {
   position: fixed;
@@ -135,3 +136,29 @@ textarea { resize: vertical; }
 @media (max-width: 640px) {
   .form-grid { grid-template-columns: 1fr; }
 }
+/* Ensure fields size correctly */
+.form-row select {
+  min-height: 60px;         /* taller control */
+  line-height: 1.2;
+}
+
+/* Prevent clipping inside modal body */
+.modal-body,
+.modal-sheet {
+  overflow: visible;         /* allow dropdown to escape */
+}
+
+/* Create a higher stacking context for the dropdown */
+.form-row,
+select {
+  position: relative;
+  z-index: 2;                /* above neighbors */
+}
+
+/* Safari/WebKit dropdown fix inside transformed parents */
+@supports (-webkit-overflow-scrolling: touch) {
+  .modal-backdrop { transform: translateZ(0); }
+}
+
+/* If any parent sets overflow:hidden, override here */
+.form-grid { overflow: visible; }

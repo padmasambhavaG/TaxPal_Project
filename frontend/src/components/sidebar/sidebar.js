@@ -40,8 +40,8 @@ export default function Sidebar({ activeTab = "dashboard" }) {
             Budgets
           </button>
 
-          <button className={`nav-btn ${activeTab === "tax" ? "active" : ""}`} onClick={() => navigate("/tax")}>
-            <span className="nav-icon"><FiPercent /></span>
+          <button className={`nav-btn ${activeTab === "tax" ? "active" : ""}`} onClick={() => navigate("/tax-estimator")}>
+            <span className="nav-icon"><FiPercent size={18} /></span>
             Tax Estimator
           </button>
 

@@ -87,7 +87,7 @@ export default function Security() {
             <h4>Password</h4>
             <p>Update a strong, unique password.</p>
             <div className="toolbar">
-              <button className="btn" type="button" onClick={goChangePassword}>
+              <button className="btn34" type="button" onClick={goChangePassword}>
                 Change password
               </button>
             </div>

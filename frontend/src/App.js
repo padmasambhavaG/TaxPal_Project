@@ -20,6 +20,11 @@ import Budgets from "./components/budgets/budgets";
 import { ToastProvider } from "./components/toast/ToastProvider";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 
+import TaxEstimator from "./components/taxEstimator/taxEstimator";
+import TaxCalendar from "./components/taxCalender/taxCalender";
+import Reports from "./components/report/reports";
+import Transactions from "./components/transactions/transactions";
+
 function App() {
   return (
     <ToastProvider>
@@ -42,6 +47,10 @@ function App() {
           >
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/budgets" element={<Budgets />} />
+            <Route path="/tax-estimator" element={<TaxEstimator />} />
+            <Route path="/tax-calendar" element={<TaxCalendar />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/transactions" element={<Transactions />} />
 
             {/* Settings nested inside Layout */}
             <Route path="/settings" element={<SettingsLayout />}>
