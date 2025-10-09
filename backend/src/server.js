@@ -37,6 +37,11 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/transactions', require('./routes/transactionRoutes'));
+app.use('/api/budgets', require('./routes/budgetRoutes'));
+app.use('/api/categories', require('./routes/categoryRoutes'));
+app.use('/api/tax-estimates', require('./routes/taxEstimateRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });

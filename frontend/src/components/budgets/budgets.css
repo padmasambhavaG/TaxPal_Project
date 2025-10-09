@@ -35,6 +35,7 @@
 }
 .chip.good{ background:#ecfdf5; color:#065f46; border-color:#bbf7d0; }
 .chip.warn{ background:#fff7ed; color:#9a3412; border-color:#fed7aa; }
+.chip.bad{ background:#fee2e2; color:#b91c1c; border-color:#fecaca; }
 
 .budget-grid{
   display:grid;
@@ -108,6 +109,33 @@
   font-size: 13px;   /* or 0.8125rem */
   line-height: 1.3;  /* slightly tighter, keep readable */
 }
+.budget-table tbody td .progress-track {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.budget-table tbody td .progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+.budget-table tbody td .progress-fill.good { background: #22c55e; }
+.budget-table tbody td .progress-fill.warning,
+.budget-table tbody td .progress-fill.warn { background: #f97316; }
+.budget-table tbody td .progress-fill.bad { background: #ef4444; }
+
+.budget-table tbody td .progress-label {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #475569;
+}
 .link{
   background:none; border:none; padding:0; color:var(--blue); cursor:pointer;
 }
@@ -137,4 +165,24 @@ hr {
   border-radius: 6px;
   background: #fff;
   color: var(--text);
+}
+
+.budgets-toolbar{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  margin-bottom:16px;
+}
+
+.budget-chart{
+  width:100%;
+  min-height:260px;
+}
+
+@media (min-width: 900px){
+  .budgets-toolbar{
+    flex-direction:row;
+    align-items:flex-end;
+    justify-content:space-between;
+  }
 }

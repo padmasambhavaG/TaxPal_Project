@@ -1,5 +1,11 @@
-import React, { useMemo, useState } from "react";
-import "./reports.css";
+import React, { useEffect, useMemo, useState } from 'react';
+import './reports.css';
+import {
+  fetchReports,
+  createReport,
+  deleteReport,
+} from '../../services/api';
+import { useToast } from '../toast/ToastProvider';
 
 // Demo options
 const REPORT_TYPES = ["Income Statement", "Balance Sheet", "Cash Flow", "Expense Summary"];
@@ -30,8 +36,11 @@ export default function Reports() {
     format: FORMATS[0],
   });
 
-  const [reports, setReports] = useState([]); // recent generated items
-  const [selectedId, setSelectedId] = useState(null); // preview selection
+  const [reports, setReports] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const { showToast } = useToast();
 
   const onChange = (e) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -39,11 +48,42 @@ export default function Reports() {
   const onReset = () =>
     setForm({ type: REPORT_TYPES[0], period: PERIODS[0].id, format: FORMATS[0] });
 
-  const onGenerate = (e) => {
+  useEffect(() => {
+    const loadReports = async () => {
+      try {
+        setLoading(true);
+        const response = await fetchReports();
+        const normalized = (response.reports || []).map((report) => ({
+          ...report,
+          id: report._id,
+          generatedAt: report.createdAt,
+          content:
+            report.payload || {
+              title: report.reportType,
+              period: report.period,
+              generatedAt: new Date(report.createdAt).toLocaleString(),
+              lines: [],
+            },
+        }));
+        setReports(normalized);
+        if (normalized.length > 0) {
+          setSelectedId((prev) => prev && normalized.some((r) => r.id === prev) ? prev : normalized[0].id);
+        }
+      } catch (error) {
+        const message = error.message || 'Failed to load reports';
+        showToast({ message, type: 'error' });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadReports();
+  }, [showToast]);
+
+  const onGenerate = async (e) => {
     e.preventDefault();
     const periodLabel = PERIODS.find((p) => p.id === form.period)?.label ?? form.period;
     const item = {
-      id: crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`,
       name: makeReportName(form.type, periodLabel),
       generatedAt: nowISO(),
       type: form.type,
@@ -61,15 +101,45 @@ export default function Reports() {
         ],
       },
     };
-    setReports((r) => [item, ...r].slice(0, 20));
-    setSelectedId(item.id);
+    try {
+      setSaving(true);
+      const response = await createReport({
+        name: item.name,
+        period: item.period,
+        reportType: item.type,
+        format: item.format,
+        payload: item.content,
+      });
+      const saved = response.report;
+      const normalized = {
+        ...saved,
+        id: saved._id,
+        generatedAt: saved.createdAt,
+        content: saved.payload || item.content,
+      };
+      setReports((prev) => [normalized, ...prev]);
+      setSelectedId(normalized.id);
+      showToast({ message: 'Report generated successfully' });
+    } catch (error) {
+      const message = error.message || 'Failed to generate report';
+      showToast({ message, type: 'error' });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const onDelete = (id) => {
-    const ok = window.confirm("Delete this report?");
+  const onDelete = async (id) => {
+    const ok = window.confirm('Delete this report?');
     if (!ok) return;
-    setReports((prev) => prev.filter((r) => r.id !== id));
-    setSelectedId((sid) => (sid === id ? null : sid));
+    try {
+      await deleteReport(id);
+      setReports((prev) => prev.filter((r) => r.id !== id));
+      setSelectedId((sid) => (sid === id ? null : sid));
+      showToast({ message: 'Report deleted' });
+    } catch (error) {
+      const message = error.message || 'Failed to delete report';
+      showToast({ message, type: 'error' });
+    }
   };
 
   const selected = useMemo(
@@ -178,8 +248,10 @@ export default function Reports() {
               </label>
 
               <div className="toolbar">
-                <button type="button" className="btn ghost" onClick={onReset}>Reset</button>
-                <button type="submit" className="btn primary">Generate Report</button>
+                <button type="button" className="btn ghost" onClick={onReset} disabled={saving}>Reset</button>
+                <button type="submit" className="btn primary" disabled={saving}>
+                  {saving ? 'Generating…' : 'Generate Report'}
+                </button>
               </div>
             </form>
           </div>
@@ -198,8 +270,13 @@ export default function Reports() {
                   </tr>
                 </thead>
                 <tbody>
-                  {reports.map((r) => (
-                    <tr key={r.id} className={selectedId === r.id ? "active" : ""}>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={5} className="empty">Loading reports…</td>
+                    </tr>
+                  ) : (
+                    reports.map((r) => (
+                      <tr key={r.id} className={selectedId === r.id ? 'active' : ''}>
                       <td>{r.name}</td>
                       <td>{new Date(r.generatedAt).toLocaleString()}</td>
                       <td>{r.period}</td>
@@ -210,8 +287,9 @@ export default function Reports() {
                         <button className="link danger" onClick={() => onDelete(r.id)}>Delete</button>
                       </td>
                     </tr>
-                  ))}
-                  {reports.length === 0 && (
+                    ))
+                  )}
+                  {!loading && reports.length === 0 && (
                     <tr>
                       <td colSpan={5} className="empty">No results.</td>
                     </tr>
