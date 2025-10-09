@@ -1,7 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import AddReminderModal from "../taxCalender/addReminderModal";
-import "./taxEstimator.css";
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import AddReminderModal from '../taxCalender/addReminderModal';
+import './taxEstimator.css';
+import {
+  fetchTaxEstimates,
+  saveTaxEstimate,
+  deleteTaxEstimate,
+} from '../../services/api';
+import { useToast } from '../toast/ToastProvider';
 
 const COUNTRIES = [
   "United States",
@@ -105,18 +111,23 @@ function estimateQuarterlyTax({
 
 export default function TaxEstimator() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [openReminder, setOpenReminder] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
-    country: "United States",
-    state: "California",
-    status: "Single",
-    quarter: "Q2",
-    income: "",
-    expenses: "",
-    insurance: "",
-    retirement: "",
-    homeOffice: "",
+    country: 'United States',
+    state: 'California',
+    status: 'Single',
+    quarter: 'Q2',
+    year: new Date().getFullYear(),
+    income: '',
+    expenses: '',
+    insurance: '',
+    retirement: '',
+    homeOffice: '',
   });
 
   const subdivisions = useMemo(() => STATES_BY_COUNTRY[form.country] ?? [], [form.country]);
@@ -135,30 +146,91 @@ export default function TaxEstimator() {
     });
   }, [form.country, hasSubdivisions, subdivisions]);
 
-  const onChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: name === 'year' ? Number(value) : value }));
+  };
 
   const result = useMemo(() => estimateQuarterlyTax(form), [form]);
 
   const quarterDueDate = useMemo(() => {
     // simple demo due dates
-    const year = new Date().getFullYear();
+    const year = Number(form.year) || new Date().getFullYear();
     const map = {
       Q1: `${year}-04-15`,
       Q2: `${year}-06-15`,
       Q3: `${year}-09-15`,
       Q4: `${year + 1}-01-15`,
     };
-    return map[form.quarter] || "";
-  }, [form.quarter]);
+    return map[form.quarter] || '';
+  }, [form.quarter, form.year]);
 
   const seedReminder = useMemo(
     () => ({
       title: `${form.quarter} Estimated Tax Payment`,
       date: quarterDueDate,
-      type: "payment",
+      type: 'payment',
     }),
     [form.quarter, quarterDueDate]
   );
+
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        setLoadingHistory(true);
+        const response = await fetchTaxEstimates();
+        setHistory(response.estimates || []);
+      } catch (error) {
+        const message = error.message || 'Failed to load tax estimates';
+        showToast({ message, type: 'error' });
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
+
+    loadHistory();
+  }, [showToast]);
+
+  const handleSaveEstimate = async () => {
+    try {
+      setSaving(true);
+      await saveTaxEstimate({
+        quarter: form.quarter,
+        year: form.year,
+        country: form.country,
+        state: form.state,
+        filingStatus: form.status,
+        grossIncome: result.grossQuarter,
+        businessExpenses: Number(form.expenses || 0),
+        healthInsurancePremiums: Number(form.insurance || 0),
+        retirementContribution: Number(form.retirement || 0),
+        homeOfficeDeduction: Number(form.homeOffice || 0),
+        estimatedTax: result.estimatedQuarterlyTax,
+        effectiveRate: result.effectiveRate,
+      });
+      showToast({ message: 'Tax estimate saved' });
+      const response = await fetchTaxEstimates();
+      setHistory(response.estimates || []);
+    } catch (error) {
+      const message = error.message || 'Failed to save tax estimate';
+      showToast({ message, type: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteEstimate = async (id) => {
+    const confirmed = window.confirm('Delete this saved estimate?');
+    if (!confirmed) return;
+    try {
+      await deleteTaxEstimate(id);
+      setHistory((prev) => prev.filter((item) => item._id !== id));
+      showToast({ message: 'Tax estimate deleted' });
+    } catch (error) {
+      const message = error.message || 'Failed to delete tax estimate';
+      showToast({ message, type: 'error' });
+    }
+  };
 
   return (
     <div className="tax-page">
@@ -234,6 +306,18 @@ export default function TaxEstimator() {
               </select>
             </label>
 
+            <label className="set-field">
+              <span className="set-label">Year</span>
+              <input
+                name="year"
+                type="number"
+                min="2000"
+                max="2100"
+                value={form.year}
+                onChange={onChange}
+              />
+            </label>
+
             <label className="set-field span-2">
               <span className="set-label">Gross Income for Quarter</span>
               <input
@@ -305,9 +389,10 @@ export default function TaxEstimator() {
               <button
                 type="button"
                 className="btn primary"
-                onClick={() => setForm((f) => ({ ...f }))}
+                onClick={handleSaveEstimate}
+                disabled={saving}
               >
-                Calculate Estimated Tax
+                {saving ? 'Saving…' : 'Save Estimate'}
               </button>
             </div>
           </form>
@@ -341,6 +426,56 @@ export default function TaxEstimator() {
               <span>Estimated Quarterly Tax</span>
               <span>₹{result.estimatedQuarterlyTax.toLocaleString()}</span>
             </div>
+          </div>
+
+          <div className="history">
+            <h4 className="set-title sm">Saved Estimates</h4>
+            {loadingHistory ? (
+              <div className="placeholder">Loading history…</div>
+            ) : history.length === 0 ? (
+              <div className="placeholder">No saved estimates yet.</div>
+            ) : (
+              <table className="history-table">
+                <thead>
+                  <tr>
+                    <th>Quarter</th>
+                    <th>Year</th>
+                    <th>Estimated Tax</th>
+                    <th>Effective Rate</th>
+                    <th>Due Date</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((item) => (
+                    <tr key={item._id}>
+                      <td>{item.quarter}</td>
+                      <td>{item.year}</td>
+                      <td>₹{Number(item.estimatedTax || 0).toLocaleString()}</td>
+                      <td>{((item.effectiveRate || 0) * 100).toFixed(1)}%</td>
+                      <td>
+                        {item.dueDate
+                          ? new Date(item.dueDate).toLocaleDateString(undefined, {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                            })
+                          : '—'}
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="link danger"
+                          onClick={() => handleDeleteEstimate(item._id)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </div>

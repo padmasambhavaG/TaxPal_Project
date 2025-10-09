@@ -12,10 +12,10 @@ export default function Sidebar({ activeTab = "dashboard" }) {
   const openConfirm = () => setShowConfirm(true);
   const cancel = () => setShowConfirm(false);
   const confirm = () => {
-    // clear auth if needed
-    // localStorage.removeItem("token");
+    localStorage.removeItem('taxpal_token');
+    localStorage.removeItem('taxpal_user');
     setShowConfirm(false);
-    navigate("/signin");
+    navigate('/signin');
   };
 
   return (

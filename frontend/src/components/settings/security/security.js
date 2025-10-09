@@ -19,7 +19,8 @@ export default function Security() {
   const cancel = () => setShowConfirm(false);
   const confirm = () => {
     // Perform logout logic here
-    localStorage.removeItem("token");
+    localStorage.removeItem('taxpal_token');
+    localStorage.removeItem('taxpal_user');
 
     // Close the modal
     setShowConfirm(false);
@@ -53,7 +54,8 @@ export default function Security() {
       await new Promise((r) => setTimeout(r, 600));
 
       // On success: clear auth and redirect to signup
-      localStorage.removeItem("token");
+      localStorage.removeItem('taxpal_token');
+      localStorage.removeItem('taxpal_user');
       setShowConfirmDelete(false);
       navigate("/signup");
     } catch (err) {

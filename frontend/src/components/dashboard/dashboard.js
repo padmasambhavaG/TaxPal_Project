@@ -1,43 +1,179 @@
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './dashboard.css';
+import IncomeModal from '../income/incomemodal';
+import ExpenseModal from '../expence/expencemodal';
+import { fetchTransactionSummary } from '../../services/api';
+import { useToast } from '../toast/ToastProvider';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 
-// src/components/dashboard/Dashboard.js
-import React, { useEffect, useState } from "react";
-import "./dashboard.css";
+const currency = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  minimumFractionDigits: 2,
+});
 
-// import modals from separate folders (all .js files)
-import IncomeModal from "../income/incomemodal";
-import ExpenseModal from "../expence/expencemodal";
+const formatDate = (iso) => {
+  if (!iso) return '—';
+  const date = new Date(iso);
+  return date.toLocaleDateString(undefined, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+};
 
-// shared transactions store (ensure this path is correct)
-import { txStore } from "../transactions/txStore";
+const formatMonthLabel = (iso) => {
+  if (!iso) return '—';
+  const [year, month] = iso.split('-').map(Number);
+  const date = new Date(year, month - 1, 1);
+  return date.toLocaleString('en-US', { month: 'short' });
+};
 
-// navigation
-import { useNavigate } from "react-router-dom";
+const pieColors = ['#6366f1', '#22d3ee', '#f97316', '#10b981', '#facc15', '#a855f7', '#ef4444', '#14b8a6'];
+
+const RANGE_LABEL = {
+  year: 'Month',
+  quarter: 'Quarter',
+  month: 'Day',
+};
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
-  // modal visibility state
   const [showIncome, setShowIncome] = useState(false);
   const [showExpense, setShowExpense] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [metrics, setMetrics] = useState(null);
+  const [recent, setRecent] = useState([]);
+  const [monthlySeries, setMonthlySeries] = useState([]);
+  const [dailySeries, setDailySeries] = useState([]);
+  const [quarterSeries, setQuarterSeries] = useState([]);
+  const [categoryBreakdown, setCategoryBreakdown] = useState([]);
+  const [chartRange, setChartRange] = useState('year');
 
-  // latest three transactions
-  const [recent, setRecent] = useState(
-    [...txStore.getAll()].sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 3)
-  );
+  const loadSummary = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await fetchTransactionSummary();
+      setMetrics(data.metrics || null);
+      setRecent(data.recentTransactions || []);
+      setMonthlySeries(data.monthlySeries || []);
+      setDailySeries(data.dailySeries || []);
+      setQuarterSeries(data.quarterSeries || []);
+      setCategoryBreakdown(data.categoryBreakdown || []);
+    } catch (error) {
+      const message = error.message || 'Failed to load dashboard data';
+      showToast({ message, type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  }, [showToast]);
 
   useEffect(() => {
-    const sub = txStore.subscribe((all) => {
-      const latest = [...all].sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 3);
-      setRecent(latest);
-    });
-    return sub;
+    loadSummary();
+  }, [loadSummary]);
+
+  const currentUser = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('taxpal_user'));
+    } catch (error) {
+      return null;
+    }
   }, []);
 
-  // example handler where records would be persisted
-  const handleRecord = (payload) => {
-    // Optional callback for parent-level actions; store addition is already done in the modals
-    console.log("record:", payload);
+  const displayName = currentUser?.fullName || currentUser?.name || 'there';
+
+  const handleRecord = () => {
+    loadSummary();
   };
+
+  const yearData = useMemo(() => {
+    const byMonth = new Map();
+    monthlySeries.forEach((entry) => {
+      if (!byMonth.has(entry.month)) {
+        byMonth.set(entry.month, {
+          label: formatMonthLabel(entry.month),
+          income: 0,
+          expense: 0,
+        });
+      }
+      const record = byMonth.get(entry.month);
+      if (entry.type === 'income') {
+        record.income = entry.total;
+      } else {
+        record.expense = entry.total;
+      }
+      byMonth.set(entry.month, record);
+    });
+    return Array.from(byMonth.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([, value]) => value);
+  }, [monthlySeries]);
+
+  const quarterData = useMemo(
+    () =>
+      quarterSeries.map((entry) => ({
+        label: entry.period,
+        income: entry.income,
+        expense: entry.expense,
+      })),
+    [quarterSeries]
+  );
+
+  const monthData = useMemo(() => {
+    const byDay = new Map();
+    dailySeries.forEach((entry) => {
+      const dayKey = entry.day;
+      if (!byDay.has(dayKey)) {
+        const formatted = new Date(dayKey).toLocaleDateString(undefined, {
+          day: '2-digit',
+          month: 'short',
+        });
+        byDay.set(dayKey, { label: formatted, income: 0, expense: 0 });
+      }
+      const record = byDay.get(dayKey);
+      if (entry.type === 'income') {
+        record.income = entry.total;
+      } else {
+        record.expense = entry.total;
+      }
+      byDay.set(dayKey, record);
+    });
+    return Array.from(byDay.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([, value]) => value);
+  }, [dailySeries]);
+
+  const chartData = useMemo(() => {
+    if (chartRange === 'quarter') return quarterData;
+    if (chartRange === 'month') return monthData;
+    return yearData;
+  }, [chartRange, quarterData, monthData, yearData]);
+
+  const pieData = useMemo(
+    () =>
+      categoryBreakdown.map((item) => ({
+        name: item.category,
+        value: item.total,
+      })),
+    [categoryBreakdown]
+  );
+
+  const isLoading = loading && !metrics;
 
   return (
     <>
@@ -45,7 +181,7 @@ export default function Dashboard() {
         <div className="header-content">
           <h1>Financial Dashboard</h1>
           <p className="welcome-text">
-            Welcome back, Alex Morgan! Here's your financial summary.
+            Welcome back, {displayName}! Here's your financial summary.
           </p>
         </div>
         <div className="header-actions">
@@ -60,126 +196,175 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* KPIs */}
-      <section className="kpi-section">
-        <div className="kpi-card">
-          <div className="kpi-content">
-            <div className="kpi-label">Monthly Income</div>
-            <div className="kpi-value">₹0.00</div>
-            <div className="kpi-trend positive">↗ last month</div>
+      <section className="metric-grid">
+        {isLoading ? (
+          [...Array(4)].map((_, idx) => (
+            <div className="metric-card loading" key={idx}>
+              <div className="metric-header">
+                <span className="metric-title">Loading…</span>
+              </div>
+              <div className="metric-value skeleton" />
+              <div className="metric-change skeleton" />
+            </div>
+          ))
+        ) : (
+          <>
+            <MetricCard
+              title="Monthly Income"
+              value={currency.format(metrics?.monthlyIncome || 0)}
+              change={metrics?.incomeChange}
+              changeLabel="from last month"
+              icon="arrow-up"
+            />
+            <MetricCard
+              title="Monthly Expense"
+              value={currency.format(metrics?.monthlyExpense || 0)}
+              change={metrics?.expenseChange}
+              changeLabel="from last month"
+              icon="arrow-down"
+            />
+            <MetricCard
+              title="Estimated Tax Due"
+              value={currency.format(metrics?.estimatedTaxDue || 0)}
+              subtitle={metrics?.estimatedTaxDueDate
+                ? `Due ${formatDate(metrics.estimatedTaxDueDate)}`
+                : 'No upcoming taxes'}
+              icon="info"
+            />
+            <MetricCard
+              title="Savings Rate"
+              value={`${(metrics?.savingsRate || 0).toFixed(1)}%`}
+              change={metrics?.savingsRateChange}
+              changeLabel="vs last month"
+              icon="target"
+            />
+          </>
+        )}
+      </section>
+
+      <section className="charts-grid">
+        <div className="chart-card bar">
+          <div className="chart-header">
+            <h3>Income vs Expense Overview</h3>
+            <div className="toggle-group">
+              {['year', 'quarter', 'month'].map((range) => (
+                <button
+                  key={range}
+                  type="button"
+                  className={`toggle-btn ${chartRange === range ? 'active' : ''}`}
+                  onClick={() => setChartRange(range)}
+                >
+                  {range.charAt(0).toUpperCase() + range.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="chart-body">
+            {chartData.length === 0 ? (
+              <div className="placeholder-content">
+                <span className="placeholder-icon"></span>
+                <p>No data available yet</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={chartData} margin={{ top: 16, right: 24, left: 0, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="label" label={{ value: RANGE_LABEL[chartRange], position: 'insideBottom', dy: 12 }} />
+                  <YAxis tickFormatter={(value) => currency.format(value).replace('₹', '')} />
+                  <Tooltip formatter={(value) => currency.format(value)} />
+                  <Legend />
+                  <Bar dataKey="income" name="Income" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="expense" name="Expense" fill="#f97316" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
-        <div className="kpi-card">
-          <div className="kpi-content">
-            <div className="kpi-label">Monthly Expenses</div>
-            <div className="kpi-value">₹0.00</div>
-            <div className="kpi-trend neutral">No expenses yet</div>
+
+        <div className="chart-card pie">
+          <div className="chart-header">
+            <h3>Expense Breakdown</h3>
           </div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-content">
-            <div className="kpi-label">Net Income</div>
-            <div className="kpi-value">₹0.00</div>
-            <div className="kpi-trend positive">↗ Perfect month!</div>
-          </div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-content">
-            <div className="kpi-label">Savings Rate</div>
-            <div className="kpi-value">100.0%</div>
-            <div className="kpi-trend positive">↗ Above target</div>
+          <div className="chart-body">
+            {pieData.length === 0 ? (
+              <div className="placeholder-content">
+                <span className="placeholder-icon"></span>
+                <p>No expenses recorded yet</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={3}
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={entry.name} fill={pieColors[index % pieColors.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => currency.format(value)} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Charts */}
-      <section className="charts-section">
-        <div className="chart-card large">
-          <div className="chart-header">
-            <h3>Income vs Expenses Overview</h3>
-            <div className="chart-filters">
-              <button className="filter-btn">Year</button>
-              <button className="filter-btn">Quater</button>
-              <button className="filter-btn">Month</button>
-            </div>
-          </div>
-          <div className="chart-placeholder">
-            <div className="placeholder-content">
-              <span className="placeholder-icon"></span>
-              <p>Chart visualization</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="chart-card">
-          <div className="chart-header">
-            <h3>Expense Categories</h3>
-          </div>
-          <div className="chart-placeholder">
-            <div className="placeholder-content">
-              <span className="placeholder-icon"></span>
-              <p>Pie chart</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Transactions */}
       <section className="transactions-section">
-  <div className="section-card">
-    <div className="section-header">
-      <h3>Recent Transactions</h3>
-      <button className="view-all-btn" onClick={() => navigate("/transactions")}>
-        View All →
-      </button>
-    </div>
+        <div className="section-card">
+          <div className="section-header">
+            <h3>Recent Transactions</h3>
+            <button className="view-all-btn" onClick={() => navigate('/transactions')}>
+              View All →
+            </button>
+          </div>
 
-    {recent.length === 0 ? (
-      <div className="transactions-placeholder">
-        <div className="placeholder-content">
-          <span className="placeholder-icon"></span>
-          <p>No transactions yet</p>
+          {recent.length === 0 ? (
+            <div className="transactions-placeholder">
+              <div className="placeholder-content">
+                <span className="placeholder-icon"></span>
+                <p>No transactions yet</p>
+              </div>
+            </div>
+          ) : (
+            <div className="table-wrap compact">
+              <table className="tx-table mini">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Type</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recent.map((t) => (
+                    <tr key={t._id}>
+                      <td>{formatDate(t.date)}</td>
+                      <td className="title">{t.description}</td>
+                      <td className="cat">{t.category || '—'}</td>
+                      <td className={`amount ${t.type}`}>
+                        {t.type === 'income' ? '+' : '-'}
+                        {currency.format(Number(t.amount || 0))}
+                      </td>
+                      <td className={`type ${t.type}`}>{t.type === 'income' ? 'Income' : 'Expense'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-      </div>
-    ) : (
-      <div className="table-wrap compact">
-        <table className="tx-table mini">
-          <colgroup>
-            <col /><col /><col /><col /><col />
-          </colgroup>
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Time & Date</th>
-              <th>Category</th>
-              <th>Type</th>
-              <th className="right">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {recent.map((t) => (
-              <tr key={t.id}>
-                <td className="title">{t.title}</td>
-                <td className="when">
-                  {new Date(t.at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })} ·{" "}
-                  {new Date(t.at).toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" })}
-                </td>
-                <td className="cat">{t.category || "—"}</td>
-                <td className={`type ${t.type}`}>{t.type === "income" ? "Income" : "Expense"}</td>
-                <td className={`amount right ${t.type}`}>
-                  {t.type === "income" ? "+" : "-"}₹{Number(t.amount || 0).toLocaleString()}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )}
-  </div>
-</section>
+      </section>
 
-
-      {/* Modals */}
       <IncomeModal
         open={showIncome}
         onClose={() => setShowIncome(false)}
@@ -191,5 +376,31 @@ export default function Dashboard() {
         onSubmit={handleRecord}
       />
     </>
+  );
+}
+
+function MetricCard({ title, value, change, changeLabel, subtitle, icon }) {
+  const hasChange = typeof change === 'number' && Number.isFinite(change);
+  const positive = hasChange ? change >= 0 : false;
+  const changeText = hasChange ? `${positive ? '▲' : '▼'} ${Math.abs(change).toFixed(1)}%` : '—';
+
+  return (
+    <div className="metric-card">
+      <div className="metric-header">
+        <span className="metric-title">{title}</span>
+        {icon === 'info' && <span className="metric-icon">ℹ️</span>}
+        {icon === 'target' && <span className="metric-icon">🎯</span>}
+        {icon === 'arrow-up' && <span className="metric-icon">⬆️</span>}
+        {icon === 'arrow-down' && <span className="metric-icon">⬇️</span>}
+      </div>
+      <div className="metric-value">{value}</div>
+      {subtitle ? (
+        <div className="metric-sub">{subtitle}</div>
+      ) : (
+        <div className={`metric-change ${hasChange ? (positive ? 'positive' : 'negative') : ''}`}>
+          {changeText} {hasChange && changeLabel ? changeLabel : !hasChange && changeLabel ? changeLabel : ''}
+        </div>
+      )}
+    </div>
   );
 }
