@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Budget = require('../models/Budget');
 const Transaction = require('../models/Transaction');
+const Category = require('../models/Category');
 
 const computeStatus = (spent, limit) => {
   if (!limit) {
@@ -128,9 +129,25 @@ exports.createBudget = async (req, res) => {
       return res.status(422).json({ message: 'Limit must be a positive number' });
     }
 
+    const trimmedCategory = typeof category === 'string' ? category.trim() : '';
+
+    if (!trimmedCategory) {
+      return res.status(422).json({ message: 'Category is required' });
+    }
+
+    const existingCategory = await Category.findOne({
+      user: userObjectId,
+      name: trimmedCategory,
+      type: 'expense',
+    }).lean();
+
+    if (!existingCategory) {
+      return res.status(422).json({ message: 'Select a category from your expense categories' });
+    }
+
     const budget = await Budget.create({
       user: userObjectId,
-      category,
+      category: trimmedCategory,
       limit: numericLimit,
       month: normalizedMonth,
       note,
@@ -165,6 +182,21 @@ exports.updateBudget = async (req, res) => {
         }
       }
     });
+
+    if (typeof update.category === 'string') {
+      update.category = update.category.trim();
+      if (!update.category) {
+        return res.status(422).json({ message: 'Category is required' });
+      }
+      const categoryDoc = await Category.findOne({
+        user: new mongoose.Types.ObjectId(req.user.id),
+        name: update.category,
+        type: 'expense',
+      }).lean();
+      if (!categoryDoc) {
+        return res.status(422).json({ message: 'Select a category from your expense categories' });
+      }
+    }
 
     if (normalizedMonth) {
       update.month = normalizedMonth;

@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
 import "./confirmLogout.css";
 
+
 export default function ConfirmLogout({ open, onCancel, onConfirm }) {
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -27,7 +28,10 @@ export default function ConfirmLogout({ open, onCancel, onConfirm }) {
         </div>
         <div className="confirm-footer">
           <button className="btn ghost" type="button" onClick={onCancel}>Cancel</button>
-          <button className="btn danger" type="button" onClick={onConfirm}>Confirm</button>
+          <button className="btn danger confirm-btn" type="button" onClick={onConfirm}>
+            <span className="btn-text default">Confirm</span>
+            <span className="btn-text hover">Sign out now</span>
+          </button>
         </div>
       </div>
     </div>,

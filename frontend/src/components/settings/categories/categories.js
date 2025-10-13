@@ -9,6 +9,7 @@ import {
   deleteCategory as deleteCategoryRequest,
 } from '../../../services/api';
 import { useToast } from '../../toast/ToastProvider';
+import { useModal } from '../../modal/ModalProvider';
 
 function Dot({ color }) {
   return <span className="dot" style={{ backgroundColor: color }} />;
@@ -20,6 +21,7 @@ const dispatchCategoriesUpdated = () => {
 
 export default function Categories() {
   const { showToast } = useToast();
+  const { confirm } = useModal();
   const [tab, setTab] = useState('expense');
   const [categories, setCategories] = useState({ income: [], expense: [] });
   const [loading, setLoading] = useState(true);
@@ -89,12 +91,14 @@ export default function Categories() {
     }
   };
 
-  const handleDelete = async (id, isDefault) => {
-    if (isDefault) {
-      showToast({ message: 'Default categories cannot be deleted', type: 'warning' });
-      return;
-    }
-    const confirmed = window.confirm('Delete this category?');
+  const handleDelete = async (id) => {
+    const confirmed = await confirm({
+      title: 'Delete category',
+      message: 'This will remove the category for all future selections.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      destructive: true,
+    });
     if (!confirmed) return;
     try {
       await deleteCategoryRequest(id);
@@ -118,12 +122,12 @@ export default function Categories() {
 
   return (
     <div className="panel">
-      <div className="set-head">
-        <div>
+      <div className="set-head compact between">
+        <div className="set-head compact">
           <h2 className="set-title">Category Management</h2>
           <p className="set-sub">Add income or expense categories to tailor your budgets.</p>
         </div>
-        <div className="set-actions">{headerRight}</div>
+        <div className="page-actions">{headerRight}</div>
       </div>
 
       <div className="tabs">
@@ -153,7 +157,6 @@ export default function Categories() {
                ) : (
                  <span className="cat-name">
                    {cat.name}
-                   {cat.isDefault && <span className="default-tag">Default</span>}
                  </span>
                )}
              </div>
@@ -176,14 +179,13 @@ export default function Categories() {
                   </>
                 ) : (
                   <>
-                   <button className="icon-btn" onClick={() => startEdit(cat)} title="Edit">
-                     ✎
-                   </button>
+                  <button className="icon-btn" onClick={() => startEdit(cat)} title="Edit">
+                    ✎
+                  </button>
                     <button
-                      className={`icon-btn ${cat.isDefault ? 'disabled' : 'danger'}`}
-                      onClick={() => handleDelete(cat.id, cat.isDefault)}
-                      title={cat.isDefault ? 'Default categories cannot be deleted' : 'Delete'}
-                      disabled={cat.isDefault}
+                      className="icon-btn danger"
+                      onClick={() => handleDelete(cat.id)}
+                      title="Delete"
                     >
                       ✕
                     </button>
@@ -192,7 +194,13 @@ export default function Categories() {
               </div>
             </li>
           ))}
-          {list.length === 0 && <li className="empty">No categories yet.</li>}
+          {list.length === 0 && (
+            <li className="cat-row empty">
+              <div className="cat-main">
+                <span className="cat-name">No categories yet. Add one to get started.</span>
+              </div>
+            </li>
+          )}
         </ul>
       )}
 

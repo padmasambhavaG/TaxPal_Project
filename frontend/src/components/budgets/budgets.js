@@ -7,6 +7,7 @@ import {
   fetchCategories,
 } from '../../services/api';
 import { useToast } from '../toast/ToastProvider';
+import { useModal } from '../modal/ModalProvider';
 import {
   ResponsiveContainer,
   BarChart,
@@ -53,6 +54,7 @@ const initialFormState = {
 
 export default function Budgets() {
   const { showToast } = useToast();
+  const { confirm } = useModal();
   const [categories, setCategories] = useState([]);
   const [budgets, setBudgets] = useState([]);
   const [summary, setSummary] = useState({ totalLimit: 0, totalSpent: 0, totalRemaining: 0, health: 'Good' });
@@ -65,7 +67,10 @@ export default function Budgets() {
   const loadCategoriesList = useCallback(async () => {
     try {
       const response = await fetchCategories();
-      setCategories(response.all || []);
+      const expenseCategories = Array.isArray(response.expense)
+        ? response.expense
+        : [];
+      setCategories(expenseCategories);
     } catch (error) {
       console.error(error);
       showToast({ message: 'Failed to load categories', type: 'error' });
@@ -81,6 +86,18 @@ export default function Budgets() {
     window.addEventListener('taxpal:categories-updated', handler);
     return () => window.removeEventListener('taxpal:categories-updated', handler);
   }, [loadCategoriesList]);
+
+  useEffect(() => {
+    setForm((prev) => {
+      if (!categories.length) {
+        return { ...prev, category: '' };
+      }
+      if (prev.category && categories.some((cat) => cat.name === prev.category)) {
+        return prev;
+      }
+      return { ...prev, category: categories[0].name };
+    });
+  }, [categories]);
 
   const loadBudgets = useCallback(async () => {
     try {
@@ -152,15 +169,21 @@ export default function Budgets() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const resetForm = (monthValue) => {
-    const targetMonth = monthValue || selectedMonth || currentMonthISO();
-    setForm({ category: '', limit: '', month: targetMonth, note: '' });
-  };
+const resetForm = (monthValue) => {
+  const targetMonth = monthValue || selectedMonth || currentMonthISO();
+  setForm({ category: categories[0]?.name || '', limit: '', month: targetMonth, note: '' });
+};
 
   const handleCreate = async (event) => {
     event.preventDefault();
-    if (!form.category.trim() || !form.limit) {
+    const trimmedCategory = form.category.trim();
+    if (!trimmedCategory || !form.limit) {
       showToast({ message: 'Category and limit are required', type: 'warning' });
+      return;
+    }
+
+    if (!categories.some((cat) => cat.name === trimmedCategory)) {
+      showToast({ message: 'Pick a category from your expense list', type: 'warning' });
       return;
     }
 
@@ -174,7 +197,7 @@ export default function Budgets() {
       setSaving(true);
       const targetMonth = form.month;
       await createBudget({
-        category: form.category.trim(),
+        category: trimmedCategory,
         limit: limitValue,
         month: form.month,
         note: form.note.trim() || undefined,
@@ -210,8 +233,14 @@ export default function Budgets() {
 
   const saveEdit = async () => {
     if (!editing) return;
-    if (!editing.category.trim() || !editing.limit) {
+    const trimmedCategory = editing.category.trim();
+    if (!trimmedCategory || !editing.limit) {
       showToast({ message: 'Category and limit are required', type: 'warning' });
+      return;
+    }
+
+    if (categories.length > 0 && !categories.some((cat) => cat.name === trimmedCategory)) {
+      showToast({ message: 'Select a category from your expense list', type: 'warning' });
       return;
     }
 
@@ -225,7 +254,7 @@ export default function Budgets() {
       setSaving(true);
       const targetMonth = editing.month;
       await updateBudget(editing.id, {
-        category: editing.category.trim(),
+        category: trimmedCategory,
         limit: limitValue,
         month: editing.month,
         note: editing.note.trim() || undefined,
@@ -243,7 +272,13 @@ export default function Budgets() {
   };
 
   const removeBudget = async (id) => {
-    const confirmed = window.confirm('Delete this budget entry?');
+    const confirmed = await confirm({
+      title: 'Delete budget entry',
+      message: 'This category budget will be removed for the selected month.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      destructive: true,
+    });
     if (!confirmed) return;
     try {
       await deleteBudget(id);
@@ -265,9 +300,9 @@ export default function Budgets() {
   return (
     <div className="budgets-wrap">
       <div className="panel">
-        <div className="set-head">
-          <div>
-            <h2 className="set-titles">Create New Budget</h2>
+        <div className="set-head compact between">
+          <div className="set-head compact">
+            <h2 className="set-title">Create New Budget</h2>
             <p className="set-sub">Define a monthly amount per category.</p>
           </div>
           <div className="budget-health">
@@ -291,6 +326,11 @@ export default function Budgets() {
                 <option key={`${category.type}-${category.name}`} value={category.name} />
               ))}
             </datalist>
+            <div className={`category-hint ${categories.length === 0 ? 'warning' : ''}`}>
+              {categories.length === 0
+                ? 'Add expense categories in Settings before creating a budget.'
+                : 'Only your expense categories are available for budgets.'}
+            </div>
           </label>
 
           <label className="set-field">
@@ -331,7 +371,11 @@ export default function Budgets() {
             <button type="button" className="btn ghost sm" onClick={resetForm} disabled={saving}>
               Clear
             </button>
-            <button type="submit" className="btn primary sm" disabled={saving}>
+            <button
+              type="submit"
+              className="btn primary sm"
+              disabled={saving || categories.length === 0}
+            >
               {saving ? 'Saving...' : 'Create Budget'}
             </button>
           </div>

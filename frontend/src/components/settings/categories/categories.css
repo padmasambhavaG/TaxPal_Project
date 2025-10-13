@@ -16,11 +16,6 @@
   border-radius: 12px;
   padding: 18px;
 }
-.set-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 14px; }
-.set-title { margin: 0 0 4px 0; font-size: 18px; line-height: 1.2; color: var(--text); }
-.set-sub { margin: 0; color: var(--muted); font-size: 13px; }
-.set-actions { display: flex; align-items: center; }
-
 /* Buttons */
 .btn.primary {
   background: var(--primary); color: #fff; border: none;
@@ -45,18 +40,19 @@
   transition: background .15s ease, border-color .15s ease;
 }
 .cat-row:hover { background: var(--bg-row-hover); border-color: #263244; }
+.cat-row.empty {
+  justify-content: center;
+  color: var(--muted);
+  background: #f5f6fb;
+  border-style: dashed;
+}
+.cat-row.empty:hover {
+  background: #f5f6fb;
+  border-color: var(--border);
+}
 .cat-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .cat-name {
   color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px;
-}
-.default-tag {
-  margin-left: 6px;
-  font-size: 11px;
-  color: var(--muted);
-  background: #f1f5f9;
-  border-radius: 6px;
-  padding: 1px 6px;
-  text-transform: uppercase;
 }
 .dot {
   width: 10px; height: 10px; border-radius: 50%; display: inline-block;
@@ -71,19 +67,9 @@
   border-radius: 7px; cursor: pointer; font-size: 14px; line-height: 1;
   transition: background .15s ease, border-color .15s ease, color .15s ease;
 }
-.icon-btn:hover { background: #f6f7f7; border-color: #fcfcfc; color: #e5e7eb; }
+.icon-btn:hover { background: #f6f7f7; border-color: #cdd1d9; color: #1f2937; }
 .icon-btn.danger { color: var(--danger); }
-.icon-btn.danger:hover { background: #1a0f12; border-color: #3a1f26; }
-.icon-btn.disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-  color: #94a3b8;
-}
-.icon-btn.disabled:hover {
-  background: transparent;
-  border-color: var(--border);
-  color: #94a3b8;
-}
+.icon-btn.danger:hover { background: rgba(248, 113, 113, 0.12); border-color: var(--danger); color: var(--danger); }
 .color-input {
   width: 32px;
   height: 32px;

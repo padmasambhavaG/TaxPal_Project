@@ -5,6 +5,7 @@ import IncomeModal from '../income/incomemodal';
 import ExpenseModal from '../expence/expencemodal';
 import { fetchTransactionSummary } from '../../services/api';
 import { useToast } from '../toast/ToastProvider';
+import { getStoredUser, onStoredUserChange } from '../../utils/user';
 import {
   ResponsiveContainer,
   BarChart,
@@ -87,18 +88,24 @@ export default function Dashboard() {
     loadSummary();
   }, [loadSummary]);
 
-  const currentUser = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem('taxpal_user'));
-    } catch (error) {
-      return null;
-    }
+  const [currentUser, setCurrentUser] = useState(() => getStoredUser());
+
+  useEffect(() => {
+    const unsubscribe = onStoredUserChange(() => setCurrentUser(getStoredUser()));
+    return unsubscribe;
   }, []);
 
-  const displayName = currentUser?.fullName || currentUser?.name || 'there';
+  const displayUsername = currentUser?.username || null;
+  const friendlyName = currentUser?.fullName || currentUser?.username || 'there';
+  const displayEmail = currentUser?.email || null;
 
   const handleRecord = () => {
     loadSummary();
+  };
+
+  const coerceNumber = (value) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
   };
 
   const yearData = useMemo(() => {
@@ -112,10 +119,11 @@ export default function Dashboard() {
         });
       }
       const record = byMonth.get(entry.month);
+      const total = coerceNumber(entry.total);
       if (entry.type === 'income') {
-        record.income = entry.total;
+        record.income = total;
       } else {
-        record.expense = entry.total;
+        record.expense = total;
       }
       byMonth.set(entry.month, record);
     });
@@ -128,8 +136,8 @@ export default function Dashboard() {
     () =>
       quarterSeries.map((entry) => ({
         label: entry.period,
-        income: entry.income,
-        expense: entry.expense,
+        income: coerceNumber(entry.income),
+        expense: coerceNumber(entry.expense),
       })),
     [quarterSeries]
   );
@@ -146,10 +154,11 @@ export default function Dashboard() {
         byDay.set(dayKey, { label: formatted, income: 0, expense: 0 });
       }
       const record = byDay.get(dayKey);
+      const total = coerceNumber(entry.total);
       if (entry.type === 'income') {
-        record.income = entry.total;
+        record.income = total;
       } else {
-        record.expense = entry.total;
+        record.expense = total;
       }
       byDay.set(dayKey, record);
     });
@@ -168,7 +177,7 @@ export default function Dashboard() {
     () =>
       categoryBreakdown.map((item) => ({
         name: item.category,
-        value: item.total,
+        value: coerceNumber(item.total),
       })),
     [categoryBreakdown]
   );
@@ -177,14 +186,21 @@ export default function Dashboard() {
 
   return (
     <>
-      <header className="dash-header">
-        <div className="header-content">
-          <h1>Financial Dashboard</h1>
-          <p className="welcome-text">
-            Welcome back, {displayName}! Here's your financial summary.
+      <header className="dash-header set-head between">
+        <div className="set-head compact">
+          <h1 className="set-title lg">Financial Dashboard</h1>
+          <p className="set-sub">
+            Welcome back, {friendlyName}! Here's your financial summary.
+            {(displayUsername || displayEmail) && (
+              <span className="dash-email">
+                {displayUsername ? `Username: ${displayUsername}` : ''}
+                {displayUsername && displayEmail ? ' • ' : ''}
+                {displayEmail ? `Email: ${displayEmail}` : ''}
+              </span>
+            )}
           </p>
         </div>
-        <div className="header-actions">
+        <div className="page-actions">
           <button className="btn-record income" onClick={() => setShowIncome(true)}>
             <span className="btn-icon">➕</span>
             Record Income
@@ -267,10 +283,18 @@ export default function Dashboard() {
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={chartData} margin={{ top: 16, right: 24, left: 0, bottom: 8 }}>
+                <BarChart data={chartData} margin={{ top: 16, right: 24, left: 32, bottom: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="label" label={{ value: RANGE_LABEL[chartRange], position: 'insideBottom', dy: 12 }} />
-                  <YAxis tickFormatter={(value) => currency.format(value).replace('₹', '')} />
+                  <XAxis
+                    dataKey="label"
+                    label={{ value: RANGE_LABEL[chartRange], position: 'insideBottom', dy: 12 }}
+                    tick={{ fill: '#475569' }}
+                  />
+                  <YAxis
+                    tickFormatter={(value) => currency.format(value).replace(/₹\s?/, '')}
+                    tick={{ fill: '#475569' }}
+                    width={72}
+                  />
                   <Tooltip formatter={(value) => currency.format(value)} />
                   <Legend />
                   <Bar dataKey="income" name="Income" fill="#6366f1" radius={[6, 6, 0, 0]} />

@@ -8,6 +8,16 @@ import {
   deleteTaxEstimate,
 } from '../../services/api';
 import { useToast } from '../toast/ToastProvider';
+import { useModal } from '../modal/ModalProvider';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from 'recharts';
 
 const COUNTRIES = [
   "United States",
@@ -112,6 +122,7 @@ function estimateQuarterlyTax({
 export default function TaxEstimator() {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { confirm } = useModal();
   const [openReminder, setOpenReminder] = useState(false);
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
@@ -165,14 +176,21 @@ export default function TaxEstimator() {
     return map[form.quarter] || '';
   }, [form.quarter, form.year]);
 
-  const seedReminder = useMemo(
-    () => ({
-      title: `${form.quarter} Estimated Tax Payment`,
-      date: quarterDueDate,
-      type: 'payment',
-    }),
-    [form.quarter, quarterDueDate]
-  );
+const seedReminder = useMemo(
+  () => ({
+    title: `${form.quarter} Estimated Tax Payment`,
+    date: quarterDueDate,
+    type: 'payment',
+  }),
+  [form.quarter, quarterDueDate]
+);
+
+const formatCurrency = (value) =>
+  new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+  }).format(value || 0);
 
   useEffect(() => {
     const loadHistory = async () => {
@@ -220,7 +238,13 @@ export default function TaxEstimator() {
   };
 
   const handleDeleteEstimate = async (id) => {
-    const confirmed = window.confirm('Delete this saved estimate?');
+    const confirmed = await confirm({
+      title: 'Delete saved estimate',
+      message: 'Removing this estimate will also clear any reminders linked to it.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      destructive: true,
+    });
     if (!confirmed) return;
     try {
       await deleteTaxEstimate(id);
@@ -234,12 +258,35 @@ export default function TaxEstimator() {
 
   return (
     <div className="tax-page">
-      <div className="set-head between">
-        <div>
+      <section className="tax-metrics">
+        <MetricCard
+          title="Quarterly Gross"
+          value={formatCurrency(result.grossQuarter)}
+          subtitle={`Total income for ${form.quarter}`}
+        />
+        <MetricCard
+          title="Deductions"
+          value={formatCurrency(result.deductionsQuarter)}
+          subtitle="Expenses & adjustments"
+        />
+        <MetricCard
+          title="Estimated Tax Due"
+          value={formatCurrency(result.estimatedQuarterlyTax)}
+          subtitle={quarterDueDate ? `Due ${quarterDueDate}` : 'No upcoming taxes'}
+        />
+        <MetricCard
+          title="Effective Rate"
+          value={`${(result.effectiveRate * 100).toFixed(1)}%`}
+          subtitle="Applied to net taxable income"
+        />
+      </section>
+
+      <div className="set-head compact between">
+        <div className="set-head compact">
           <h2 className="set-title">Tax Estimator</h2>
           <p className="set-sub">Calculate estimated quarterly tax obligations.</p>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="page-actions">
           <button className="btn-outlines" onClick={() => navigate("/tax-calendar")}>
             Tax Calendar
           </button>
@@ -399,23 +446,46 @@ export default function TaxEstimator() {
         </div>
 
         <div className="panel right">
+          <div className="tax-chart">
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart
+                data={[
+                  { label: 'Gross Income', amount: result.grossQuarter },
+                  { label: 'Deductions', amount: result.deductionsQuarter },
+                  { label: 'Estimated Tax', amount: result.estimatedQuarterlyTax },
+                  {
+                    label: 'Net After Tax',
+                    amount: Math.max(result.grossQuarter - result.estimatedQuarterlyTax, 0),
+                  },
+                ]}
+                margin={{ top: 16, right: 8, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                <YAxis tickFormatter={(value) => formatCurrency(value).replace('₹', '')} />
+                <Tooltip formatter={(value) => formatCurrency(value)} />
+                <Bar dataKey="amount" radius={[6, 6, 0, 0]} fill="#3b82f6" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
           <h4 className="set-title sm">Tax Summary</h4>
           <div className="summary">
             <div className="row">
               <span>Quarterly Gross</span>
-              <span>₹{result.grossQuarter.toLocaleString()}</span>
+              <span>{formatCurrency(result.grossQuarter)}</span>
             </div>
             <div className="row">
               <span>Quarterly Deductions</span>
-              <span>₹{result.deductionsQuarter.toLocaleString()}</span>
+              <span>{formatCurrency(result.deductionsQuarter)}</span>
             </div>
             <div className="row">
               <span>Quarterly Taxable</span>
-              <span>₹{result.taxableQuarter.toLocaleString()}</span>
+              <span>{formatCurrency(result.taxableQuarter)}</span>
             </div>
             <div className="row">
               <span>Annual Taxable (est.)</span>
-              <span>₹{result.annualTaxable.toLocaleString()}</span>
+              <span>{formatCurrency(result.annualTaxable)}</span>
             </div>
             <div className="row">
               <span>Effective Rate</span>
@@ -424,7 +494,7 @@ export default function TaxEstimator() {
             <hr />
             <div className="row total">
               <span>Estimated Quarterly Tax</span>
-              <span>₹{result.estimatedQuarterlyTax.toLocaleString()}</span>
+              <span>{formatCurrency(result.estimatedQuarterlyTax)}</span>
             </div>
           </div>
 
@@ -485,6 +555,16 @@ export default function TaxEstimator() {
         onClose={() => setOpenReminder(false)}
         seed={seedReminder}
       />
+    </div>
+  );
+}
+
+function MetricCard({ title, value, subtitle }) {
+  return (
+    <div className="tax-metric-card">
+      <h4 className="metric-title">{title}</h4>
+      <div className="metric-value">{value}</div>
+      <p className="metric-subtitle">{subtitle}</p>
     </div>
   );
 }

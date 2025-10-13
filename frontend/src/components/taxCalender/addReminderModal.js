@@ -2,10 +2,12 @@ import React, { useEffect, useState } from "react";
 import { calendarStore } from "../taxEstimator/taxCalendarStore";
 import "./taxCalender.css";
 
+const getTodayISO = () => new Date().toISOString().slice(0, 10);
+
 export default function AddReminderModal({ open, onClose, seed }) {
   const [form, setForm] = useState({
     title: seed?.title || "",
-    date: seed?.date || "",
+    date: getTodayISO(),
     type: seed?.type || "reminder",
   });
 
@@ -14,11 +16,11 @@ export default function AddReminderModal({ open, onClose, seed }) {
     if (open) {
       setForm({
         title: seed?.title || "",
-        date: seed?.date || "",
+        date: getTodayISO(),
         type: seed?.type || "reminder",
       });
     }
-  }, [open, seed?.title, seed?.date, seed?.type]);
+  }, [open, seed?.title, seed?.type]);
 
   const onChange = (e) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -34,7 +36,7 @@ export default function AddReminderModal({ open, onClose, seed }) {
     });
 
     // Reset fields after successful create
-    setForm({ title: "", date: "", type: "reminder" });
+    setForm({ title: "", date: getTodayISO(), type: "reminder" });
 
     // Close modal (optional). Remove if keeping it open for multiple adds.
     onClose?.();

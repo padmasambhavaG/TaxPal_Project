@@ -18,6 +18,7 @@ import Security from "./components/settings/security/security";
 import Budgets from "./components/budgets/budgets";
 
 import { ToastProvider } from "./components/toast/ToastProvider";
+import { ModalProvider } from "./components/modal/ModalProvider";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 
 import TaxEstimator from "./components/taxEstimator/taxEstimator";
@@ -28,8 +29,9 @@ import Transactions from "./components/transactions/transactions";
 function App() {
   return (
     <ToastProvider>
-      <Router>
-        <Routes>
+      <ModalProvider>
+        <Router>
+          <Routes>
           {/* Auth routes */}
           <Route path="/" element={<Navigate to="/signin" replace />} />
           <Route path="/signin" element={<Signin />} />
@@ -62,7 +64,8 @@ function App() {
             </Route>
           </Route>
         </Routes>
-      </Router>
+        </Router>
+      </ModalProvider>
     </ToastProvider>
   );
 }

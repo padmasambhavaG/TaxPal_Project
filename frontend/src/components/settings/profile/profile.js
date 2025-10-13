@@ -1,25 +1,50 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useModal } from "../../modal/ModalProvider";
 import "../settings.css";
 import "./profile.css";
+import { getStoredUser, updateStoredUser, onStoredUserChange } from "../../../utils/user";
 
 export default function Profile() {
-  const [form, setForm] = useState({
-    username: "alexmorgan",
-    countryName: "India",
-    email: "alex.morgan@email.com",
+  const mapUserToForm = (user) => ({
+    username: user?.username || "",
+    countryName: user?.country || "",
+    email: user?.email || "",
   });
+
+  const [form, setForm] = useState(() => mapUserToForm(getStoredUser()));
+  const { alert } = useModal();
 
   const onChange = (e) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-  const onSave = (e) => {
+  useEffect(() => {
+    const sync = () => setForm(mapUserToForm(getStoredUser()));
+    const unsubscribe = onStoredUserChange(sync);
+    return unsubscribe;
+  }, []);
+
+  const onSave = async (e) => {
     e.preventDefault();
-    alert("Profile saved");
+    const trimmedUsername = form.username.trim();
+    const trimmedEmail = form.email.trim();
+
+    const normalizedCountry = form.countryName.trim();
+
+    const updates = {};
+    if (trimmedUsername) updates.username = trimmedUsername;
+    if (normalizedCountry) updates.country = normalizedCountry;
+    if (trimmedEmail) updates.email = trimmedEmail;
+    updateStoredUser(updates);
+    setForm(mapUserToForm(getStoredUser()));
+    await alert({
+      title: "Profile saved",
+      message: "Your profile details were updated successfully.",
+    });
   };
 
   return (
     <form className="panel" onSubmit={onSave}>
-      <div className="set-head">
+      <div className="set-head compact">
         <h2 className="set-title">Profile</h2>
         <p className="set-sub">Manage account details.</p>
       </div>
