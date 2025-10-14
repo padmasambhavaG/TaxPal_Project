@@ -1,5 +1,11 @@
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 const User = require('../models/User');
+const Category = require('../models/Category');
+const Transaction = require('../models/Transaction');
+const Budget = require('../models/Budget');
+const Report = require('../models/Report');
+const TaxEstimate = require('../models/TaxEstimate');
 const generateToken = require('../utils/generateToken');
 const { sendOtpEmail } = require('../utils/email');
 
@@ -105,11 +111,9 @@ exports.forgotPassword = async (req, res) => {
         .json({ message: 'Failed to send verification code email. Please try again later.' });
     }
 
-    const response = {
+    return res.json({
       message: 'Verification code sent to your email.',
-    };
-
-    return res.json(response);
+    });
   } catch (error) {
     return handleServerError(res, error);
   }
@@ -168,6 +172,65 @@ exports.resetPassword = async (req, res) => {
     await user.save();
 
     return res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    return handleServerError(res, error);
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    if (!currentPassword || !newPassword) {
+      return res.status(422).json({ message: 'Current and new password are required' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const matches = await user.matchPassword(currentPassword);
+    if (!matches) {
+      return res.status(401).json({ message: 'Current password is incorrect' });
+    }
+
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    return res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    return handleServerError(res, error);
+  }
+};
+
+exports.deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    const objectId = new mongoose.Types.ObjectId(userId);
+
+    await Promise.all([
+      Transaction.deleteMany({ user: objectId }),
+      Budget.deleteMany({ user: objectId }),
+      Category.deleteMany({ user: objectId }),
+      Report.deleteMany({ user: objectId }),
+      TaxEstimate.deleteMany({ user: objectId }),
+    ]);
+
+    await User.findByIdAndDelete(objectId);
+
+    return res.json({ message: 'Account deleted successfully' });
   } catch (error) {
     return handleServerError(res, error);
   }

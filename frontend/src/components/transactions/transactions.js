@@ -5,6 +5,7 @@ import {
   fetchTransactions,
 } from '../../services/api';
 import { useToast } from '../toast/ToastProvider';
+import { useModal } from '../modal/ModalProvider';
 import IncomeModal from '../income/incomemodal';
 import ExpenseModal from '../expence/expencemodal';
 
@@ -36,6 +37,7 @@ const initialFilters = {
 
 export default function Transactions() {
   const { showToast } = useToast();
+  const { confirm } = useModal();
   const [filters, setFilters] = useState(initialFilters);
   const [sortBy, setSortBy] = useState('date');
   const [sortDir, setSortDir] = useState('desc');
@@ -84,7 +86,13 @@ export default function Transactions() {
   };
 
   const handleDelete = async (id) => {
-    const confirmation = window.confirm('Delete this transaction?');
+    const confirmation = await confirm({
+      title: 'Delete transaction',
+      message: 'This will permanently remove the transaction from your records.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      destructive: true,
+    });
     if (!confirmation) return;
     try {
       await deleteTransaction(id);
@@ -135,7 +143,7 @@ export default function Transactions() {
     <React.Fragment>
       <div className="tx-page">
         <div className="set-head">
-          <h2 className="set-title2">Transactions</h2>
+          <h2 className="set-title">Transactions</h2>
           <p className="set-sub">All income and expenses with filters and pagination.</p>
         </div>
 

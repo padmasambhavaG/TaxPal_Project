@@ -1,11 +1,14 @@
 const express = require('express');
 const { body } = require('express-validator');
+const auth = require('../middleware/auth');
 const {
   signup,
   login,
   forgotPassword,
   verifyResetCode,
   resetPassword,
+  changePassword,
+  deleteAccount,
 } = require('../controllers/authController');
 const validateRequest = require('../middleware/validateRequest');
 
@@ -74,5 +77,24 @@ router.post(
   validateRequest,
   resetPassword
 );
+
+router.post(
+  '/change-password',
+  auth,
+  [
+    body('currentPassword').notEmpty().withMessage('Current password is required'),
+    body('newPassword')
+      .isLength({ min: 8 })
+      .withMessage('Password must be at least 8 characters')
+      .matches(/[0-9]/)
+      .withMessage('Password must contain at least one number')
+      .matches(/[!@#$%^&*]/)
+      .withMessage('Password must contain at least one special character'),
+  ],
+  validateRequest,
+  changePassword
+);
+
+router.delete('/account', auth, deleteAccount);
 
 module.exports = router;

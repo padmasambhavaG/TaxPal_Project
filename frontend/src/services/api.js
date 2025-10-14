@@ -75,6 +75,17 @@ export const resetPassword = (payload) =>
     skipAuth: true,
   });
 
+export const changePassword = (payload) =>
+  request('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const deleteAccount = () =>
+  request('/auth/account', {
+    method: 'DELETE',
+  });
+
 const toQueryString = (params = {}) => {
   const query = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -162,7 +173,7 @@ export const deleteTaxEstimate = (id) =>
     method: 'DELETE',
   });
 
-export const fetchReports = () => request('/reports');
+export const fetchReports = (params) => request(`/reports${toQueryString(params)}`);
 
 export const createReport = (payload) =>
   request('/reports', {
@@ -181,6 +192,8 @@ const api = {
   forgotPassword,
   verifyResetCode,
   resetPassword,
+  changePassword,
+  deleteAccount,
   fetchTransactions,
   fetchTransactionSummary,
   createTransaction,

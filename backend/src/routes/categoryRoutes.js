@@ -7,7 +7,6 @@ const {
   createCategory,
   updateCategory,
   deleteCategory,
-  seedDefaults,
 } = require('../controllers/categoryController');
 
 const router = express.Router();
@@ -44,9 +43,5 @@ router.delete(
   validateRequest,
   deleteCategory
 );
-
-seedDefaults().catch((error) => {
-  console.error('Failed to seed default categories', error);
-});
 
 module.exports = router;

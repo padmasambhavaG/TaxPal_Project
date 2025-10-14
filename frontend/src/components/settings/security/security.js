@@ -2,10 +2,18 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ConfirmLogout from "../../logout/confirmLogout";
 import "../settings.css";
+import "./security.css";
 import DeleteAccount from "../deleteAccount/deleteAccount";
+import { useModal } from "../../modal/ModalProvider";
+import { setStoredUser } from "../../../utils/user";
+import ChangePasswordModal from "./ChangePasswordModal";
+import { deleteAccount as deleteAccountRequest } from "../../../services/api";
+import { useToast } from "../../toast/ToastProvider";
 
 export default function Security() {
   const navigate = useNavigate();
+  const { alert } = useModal();
+  const { showToast } = useToast();
 
   // Logout modal state
   const [showConfirm, setShowConfirm] = useState(false);
@@ -13,6 +21,7 @@ export default function Security() {
   // Delete account modal state
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   // Logout modal handlers
   const openConfirm = () => setShowConfirm(true);
@@ -20,7 +29,7 @@ export default function Security() {
   const confirm = () => {
     // Perform logout logic here
     localStorage.removeItem('taxpal_token');
-    localStorage.removeItem('taxpal_user');
+    setStoredUser(null);
 
     // Close the modal
     setShowConfirm(false);
@@ -30,7 +39,10 @@ export default function Security() {
   };
 
   // Navigation
-  const goChangePassword = () => navigate("/reset-password");
+  const openChangePassword = () => setShowChangePassword(true);
+  const closeChangePassword = () => {
+    setShowChangePassword(false);
+  };
 
   // Delete account modal handlers
   const openConfirmDelete = () => setShowConfirmDelete(true);
@@ -42,25 +54,20 @@ export default function Security() {
     try {
       setDeleting(true);
 
-      // TODO: Replace with real API call
-      // const token = localStorage.getItem("token");
-      // const res = await fetch("/api/account", {
-      //   method: "DELETE",
-      //   headers: { Authorization: `Bearer ${token}` },
-      // });
-      // if (!res.ok) throw new Error("Delete failed");
-
-      // Simulate latency
-      await new Promise((r) => setTimeout(r, 600));
+      await deleteAccountRequest();
 
       // On success: clear auth and redirect to signup
       localStorage.removeItem('taxpal_token');
-      localStorage.removeItem('taxpal_user');
+      setStoredUser(null);
       setShowConfirmDelete(false);
+      showToast({ message: "Account deleted" });
       navigate("/signup");
     } catch (err) {
       console.error(err);
-      alert("Unable to delete account. Please try again.");
+      await alert({
+        title: "Delete account failed",
+        message: "Unable to delete account. Please try again.",
+      });
     } finally {
       setDeleting(false);
     }
@@ -69,7 +76,7 @@ export default function Security() {
   return (
     <>
       <div className="panel">
-        <div className="set-head">
+        <div className="set-head compact">
           <h2 className="set-title">Security</h2>
           <p className="set-sub">Protect the account and sessions.</p>
         </div>
@@ -79,7 +86,11 @@ export default function Security() {
             <h4>Active sessions</h4>
             <p>Sign out from this device and browser.</p>
             <div className="toolbar">
-              <button className="btn danger" type="button" onClick={openConfirm}>
+              <button
+                className="btn danger signout-btn"
+                type="button"
+                onClick={openConfirm}
+              >
                 Sign out all
               </button>
             </div>
@@ -89,7 +100,11 @@ export default function Security() {
             <h4>Password</h4>
             <p>Update a strong, unique password.</p>
             <div className="toolbar">
-              <button className="btn34" type="button" onClick={goChangePassword}>
+              <button
+                className="btn34 change-password-btn"
+                type="button"
+                onClick={openChangePassword}
+              >
                 Change password
               </button>
             </div>
@@ -100,7 +115,7 @@ export default function Security() {
             <p>Delete your account permanently.</p>
             <div className="toolbar">
               <button
-                className="btn danger"
+                className="btn danger delete-btn"
                 type="button"
                 onClick={openConfirmDelete}
                 disabled={deleting}
@@ -125,7 +140,10 @@ export default function Security() {
         open={showConfirmDelete}
         onCancel={cancelDelete}
         onConfirm={confirmDelete}
+        loading={deleting}
       />
+
+      <ChangePasswordModal open={showChangePassword} onClose={closeChangePassword} />
     </>
   );
 }

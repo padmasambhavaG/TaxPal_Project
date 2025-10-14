@@ -42,23 +42,6 @@
   background: #f3f4f6;
 }
 
-.tx-page .set-head {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.tx-page .set-title2 {
-  margin: 0;
-  font-size: 24px;
-  color: var(--text, #0f172a);
-}
-
-.tx-page .set-sub {
-  margin: 0;
-  color: #6b7280;
-}
-
 .panel {
   background: #fff;
   border: 1px solid #e5e7eb;

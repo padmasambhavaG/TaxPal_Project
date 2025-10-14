@@ -4,6 +4,7 @@ import "../../App.css";
 import "./signin.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { login } from "../../services/api";
+import { setStoredUser } from "../../utils/user";
 import { useToast } from "../toast/ToastProvider";
 
 function Signin() {
@@ -35,7 +36,7 @@ function Signin() {
     try {
       const response = await login(formData);
       localStorage.setItem("taxpal_token", response.token);
-      localStorage.setItem("taxpal_user", JSON.stringify(response.user));
+      setStoredUser(response.user);
       showToast({ message: response.message || "Login successful!" });
       navigate("/dashboard");
     } catch (err) {

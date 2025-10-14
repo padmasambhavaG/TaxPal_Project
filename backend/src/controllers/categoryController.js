@@ -1,23 +1,6 @@
 const mongoose = require('mongoose');
 const Category = require('../models/Category');
 
-const DEFAULT_CATEGORIES = {
-  income: [
-    { name: 'Salary', color: '#1d4ed8' },
-    { name: 'Freelance', color: '#0ea5e9' },
-    { name: 'Investments', color: '#22c55e' },
-    { name: 'Interest', color: '#6366f1' },
-  ],
-  expense: [
-    { name: 'Utilities', color: '#0ea5e9' },
-    { name: 'Food', color: '#f97316' },
-    { name: 'Rent', color: '#f43f5e' },
-    { name: 'Transport', color: '#22d3ee' },
-    { name: 'Software', color: '#a855f7' },
-    { name: 'Marketing', color: '#eab308' },
-  ],
-};
-
 const ensureObjectId = (id) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error('Invalid identifier');
@@ -31,26 +14,23 @@ const mapCategories = (categories) =>
     name: cat.name,
     type: cat.type,
     color: cat.color,
-    isDefault: Boolean(cat.isDefault),
   }));
 
 exports.listCategories = async (req, res) => {
   try {
-    const userId = req.user.id;
-    ensureObjectId(userId);
+    const userId = ensureObjectId(req.user.id);
 
-    await createDefaultSet();
-
-    const defaults = await Category.find({ isDefault: true }).lean();
-    const userCategories = await Category.find({ user: userId }).lean();
+    const categories = await Category.find({ user: userId })
+      .sort({ type: 1, name: 1 })
+      .lean();
 
     const income = [];
     const expense = [];
 
-    mapCategories(defaults.concat(userCategories)).forEach((cat) => {
+    mapCategories(categories).forEach((cat) => {
       if (cat.type === 'income') {
         income.push(cat);
-      } else {
+      } else if (cat.type === 'expense') {
         expense.push(cat);
       }
     });
@@ -65,23 +45,6 @@ exports.listCategories = async (req, res) => {
     return res.status(500).json({ message: 'Failed to load categories' });
   }
 };
-
-const createDefaultSet = async () => {
-  const existingDefaults = await Category.find({ isDefault: true }).lean();
-  if (existingDefaults.length > 0) {
-    return;
-  }
-
-  const toCreate = Object.entries(DEFAULT_CATEGORIES).flatMap(([type, cats]) =>
-    cats.map((cat) => ({ ...cat, type, isDefault: true }))
-  );
-
-  if (toCreate.length > 0) {
-    await Category.insertMany(toCreate, { ordered: false }).catch(() => {});
-  }
-};
-
-exports.seedDefaults = createDefaultSet;
 
 exports.createCategory = async (req, res) => {
   try {
@@ -116,7 +79,7 @@ exports.createCategory = async (req, res) => {
 exports.updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    ensureObjectId(req.user.id);
+    const userId = ensureObjectId(req.user.id);
     ensureObjectId(id);
 
     const update = {};
@@ -127,7 +90,7 @@ exports.updateCategory = async (req, res) => {
     });
 
     const category = await Category.findOneAndUpdate(
-      { _id: id, user: req.user.id },
+      { _id: id, user: userId },
       update,
       { new: true }
     );
@@ -136,7 +99,10 @@ exports.updateCategory = async (req, res) => {
       return res.status(404).json({ message: 'Category not found' });
     }
 
-    return res.json({ message: 'Category updated successfully', category: mapCategories([category])[0] });
+    return res.json({
+      message: 'Category updated successfully',
+      category: mapCategories([category])[0],
+    });
   } catch (error) {
     console.error('Failed to update category', error);
     return res.status(500).json({ message: 'Failed to update category' });
@@ -146,10 +112,10 @@ exports.updateCategory = async (req, res) => {
 exports.deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    ensureObjectId(req.user.id);
+    const userId = ensureObjectId(req.user.id);
     ensureObjectId(id);
 
-    const category = await Category.findOneAndDelete({ _id: id, user: req.user.id });
+    const category = await Category.findOneAndDelete({ _id: id, user: userId });
 
     if (!category) {
       return res.status(404).json({ message: 'Category not found' });

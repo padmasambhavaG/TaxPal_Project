@@ -1,22 +1,29 @@
 // src/components/sidebar/sidebar.js
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ConfirmLogout from "../logout/confirmLogout";
 import "./sidebar.css";
 import { FiHome, FiCreditCard, FiPocket, FiPercent, FiBarChart2, FiSettings, FiLogOut } from "react-icons/fi";
+import { getStoredUser, setStoredUser, onStoredUserChange } from "../../utils/user";
 
 export default function Sidebar({ activeTab = "dashboard" }) {
   const navigate = useNavigate();
   const [showConfirm, setShowConfirm] = useState(false);
+  const [user, setUser] = useState(() => getStoredUser());
 
   const openConfirm = () => setShowConfirm(true);
   const cancel = () => setShowConfirm(false);
   const confirm = () => {
     localStorage.removeItem('taxpal_token');
-    localStorage.removeItem('taxpal_user');
+    setStoredUser(null);
     setShowConfirm(false);
     navigate('/signin');
   };
+
+  useEffect(() => onStoredUserChange(() => setUser(getStoredUser())), []);
+
+  const displayName = user?.fullName || user?.username || 'User';
+  const displayEmail = user?.email || '—';
 
   return (
     <>
@@ -52,18 +59,18 @@ export default function Sidebar({ activeTab = "dashboard" }) {
         </nav>
 
         <div className="profile-info">
-  <img
-    src="/profile.png"          // or {avatar} if imported
-    alt="User avatar"
-    className="avatar-img"
-    width={36}
-    height={36}
-  />
-  <div>
-    <p className="name">Alex Morgan</p>
-    <p className="email">alex.morgan@email.com</p>
-  </div>
-</div>
+          <img
+            src="/profile.png"
+            alt="User avatar"
+            className="avatar-img"
+            width={36}
+            height={36}
+          />
+          <div>
+            <p className="name">{displayName}</p>
+            <p className="email">{displayEmail}</p>
+          </div>
+        </div>
 
           <div className="profile-actions">
             <button className="link-btn" onClick={() => navigate("/settings")}>

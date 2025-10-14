@@ -1,9 +1,43 @@
 /* Header row */
-.tax-page .between {
+.tax-page .set-head.between {
+  overflow: hidden;
+}
+
+.tax-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.tax-metric-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.04);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  overflow: hidden !important;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.metric-title {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.metric-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.metric-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
 }
 
 /* Layout: calculator wider, summary slimmer */
@@ -47,20 +81,18 @@
   max-width: 640px;
 }
 
-/* Headings and fields */
-.set-head {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 8px;
+.tax-chart {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
 }
-.set-title {
-  padding-top: 15px;
-  padding-bottom: 10px;
-  font-size: 25px;
+
+.tax-chart .recharts-default-tooltip {
+  font-size: 12px;
 }
-.set-title.sm { font-size: 16px; }
-.set-sub { margin: 4px 0 0; color: #6b7280; }
+
 .set-field { display: flex; flex-direction: column; gap: 6px; }
 .set-label { font-size: 14px; color: #191a1b; }
 
@@ -83,6 +115,7 @@
 }
 
 /* Buttons */
+
 .btn {
   height: 36px;
   padding: 0 14px;
@@ -92,7 +125,6 @@
   color: #fff;
   cursor: pointer;
 }
-.btn:hover { filter: brightness(0.98); }
 .btn:active { transform: translateY(0.5px); }
 
 .btn-outlines {
@@ -104,7 +136,6 @@
   color: #fff;
   cursor: pointer;
 }
-.btn-outlines:hover { filter: brightness(0.98); }
 .btn-outlines:active { transform: translateY(0.5px); }
 
 /* Toolbar: strong right alignment */
